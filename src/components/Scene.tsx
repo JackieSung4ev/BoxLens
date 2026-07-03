@@ -194,7 +194,7 @@ export function Scene({
           settings={settings}
         />
         <Suspense fallback={null}>
-          <WoodSurface floorY={floorY} preset={settings.surface} size={normalizedSize} />
+          <SurfaceStage floorY={floorY} preset={settings.surface} size={normalizedSize} />
         </Suspense>
         {settings.shadows ? <SoftGroundShadow floorY={floorY} size={normalizedSize} /> : null}
         <StudioCameraControls resetToken={resetToken} />
@@ -215,7 +215,7 @@ export function Scene({
   );
 }
 
-function WoodSurface({
+function SurfaceStage({
   floorY,
   preset,
   size,
@@ -224,6 +224,18 @@ function WoodSurface({
   preset: SurfacePreset;
   size: { width: number; height: number; depth: number };
 }) {
+  if (preset === 'none') {
+    return null;
+  }
+
+  if (preset === 'marble') {
+    return <MarbleSurface floorY={floorY} size={size} />;
+  }
+
+  return <WoodFloorSurface floorY={floorY} />;
+}
+
+function WoodFloorSurface({ floorY }: { floorY: number }) {
   const textures = useTexture({
     bumpMap: '/textures/hardwood2_bump.jpg',
     map: '/textures/hardwood2_diffuse.jpg',
@@ -231,12 +243,10 @@ function WoodSurface({
   }) as Record<'bumpMap' | 'map' | 'roughnessMap', Texture>;
 
   useEffect(() => {
-    const repeat = preset === 'woodFloor' ? [4.2, 4.2] : [2.15, 1.65];
-
     Object.entries(textures).forEach(([key, texture]) => {
       texture.wrapS = RepeatWrapping;
       texture.wrapT = RepeatWrapping;
-      texture.repeat.set(repeat[0], repeat[1]);
+      texture.repeat.set(4.2, 4.2);
       texture.anisotropy = Math.max(texture.anisotropy, 8);
       texture.needsUpdate = true;
 
@@ -244,31 +254,7 @@ function WoodSurface({
         texture.colorSpace = SRGBColorSpace;
       }
     });
-  }, [preset, textures]);
-
-  if (preset === 'none') {
-    return null;
-  }
-
-  if (preset === 'woodTable') {
-    const tableWidth = Math.max(size.width * 2.35, 2.6);
-    const tableDepth = Math.max(size.depth * 3.2, 2.35);
-    const thickness = 0.09;
-
-    return (
-      <mesh position={[0, floorY - thickness / 2, 0]} receiveShadow>
-        <boxGeometry args={[tableWidth, thickness, tableDepth]} />
-        <meshStandardMaterial
-          bumpMap={textures.bumpMap}
-          bumpScale={0.012}
-          map={textures.map}
-          metalness={0.02}
-          roughness={0.66}
-          roughnessMap={textures.roughnessMap}
-        />
-      </mesh>
-    );
-  }
+  }, [textures]);
 
   return (
     <mesh position={[0, floorY, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
@@ -283,6 +269,97 @@ function WoodSurface({
       />
     </mesh>
   );
+}
+
+function MarbleSurface({
+  floorY,
+  size,
+}: {
+  floorY: number;
+  size: { width: number; height: number; depth: number };
+}) {
+  const textures = useMemo(() => createMarbleTextures(), []);
+
+  useEffect(() => {
+    return () => {
+      textures.map.dispose();
+      textures.bumpMap.dispose();
+    };
+  }, [textures]);
+
+  return (
+    <mesh position={[0, floorY, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[Math.max(size.width * 3, 7.2), Math.max(size.depth * 4, 7.2)]} />
+      <meshStandardMaterial
+        bumpMap={textures.bumpMap}
+        bumpScale={0.026}
+        map={textures.map}
+        metalness={0}
+        roughness={0.42}
+      />
+    </mesh>
+  );
+}
+
+function createMarbleTextures(): { bumpMap: CanvasTexture; map: CanvasTexture } {
+  const colorCanvas = document.createElement('canvas');
+  const bumpCanvas = document.createElement('canvas');
+  colorCanvas.width = 1024;
+  colorCanvas.height = 1024;
+  bumpCanvas.width = 1024;
+  bumpCanvas.height = 1024;
+  const colorContext = colorCanvas.getContext('2d', { willReadFrequently: true });
+  const bumpContext = bumpCanvas.getContext('2d', { willReadFrequently: true });
+
+  if (colorContext && bumpContext) {
+    const colorData = colorContext.createImageData(colorCanvas.width, colorCanvas.height);
+    const bumpData = bumpContext.createImageData(bumpCanvas.width, bumpCanvas.height);
+    const width = colorCanvas.width;
+    const height = colorCanvas.height;
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const index = (y * width + x) * 4;
+        const nx = x / width;
+        const ny = y / height;
+        const sweep = Math.sin((nx * 8.5 + ny * 5.7) * Math.PI + Math.sin((nx - ny) * 18) * 0.75);
+        const hairline = Math.pow(Math.max(0, 1 - Math.abs(sweep) * 2.4), 3.2);
+        const wideVein = Math.pow(Math.max(0, 1 - Math.abs(Math.sin((nx * 2.4 - ny * 3.8 + 0.18) * Math.PI)) * 2.1), 2.1);
+        const cloud = Math.sin((nx * 21.3 + ny * 13.1) * Math.PI) * 0.5 + Math.sin((nx * 41.1 - ny * 33.7) * Math.PI) * 0.25;
+        const shade = Math.max(0, Math.min(1, 0.86 - hairline * 0.32 - wideVein * 0.18 + cloud * 0.025));
+        const red = Math.round(248 * shade + 20 * (1 - shade));
+        const green = Math.round(247 * shade + 23 * (1 - shade));
+        const blue = Math.round(244 * shade + 28 * (1 - shade));
+        const bump = Math.round(178 + hairline * 62 + wideVein * 36 + cloud * 8);
+
+        colorData.data[index] = red;
+        colorData.data[index + 1] = green;
+        colorData.data[index + 2] = blue;
+        colorData.data[index + 3] = 255;
+        bumpData.data[index] = bump;
+        bumpData.data[index + 1] = bump;
+        bumpData.data[index + 2] = bump;
+        bumpData.data[index + 3] = 255;
+      }
+    }
+
+    colorContext.putImageData(colorData, 0, 0);
+    bumpContext.putImageData(bumpData, 0, 0);
+  }
+
+  const map = new CanvasTexture(colorCanvas);
+  map.colorSpace = SRGBColorSpace;
+  const bumpMap = new CanvasTexture(bumpCanvas);
+
+  [map, bumpMap].forEach((texture) => {
+    texture.wrapS = RepeatWrapping;
+    texture.wrapT = RepeatWrapping;
+    texture.repeat.set(1.8, 1.8);
+    texture.anisotropy = 8;
+    texture.needsUpdate = true;
+  });
+
+  return { bumpMap, map };
 }
 
 function SoftGroundShadow({

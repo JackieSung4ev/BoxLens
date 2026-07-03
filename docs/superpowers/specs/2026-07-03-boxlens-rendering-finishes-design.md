@@ -7,7 +7,7 @@ Date: 2026-07-03
 Improve BoxLens so packaging previews are closer to uploaded artwork while adding production-oriented visual controls:
 
 - RGB proof-style artwork display with reduced 3D color shift.
-- More realistic wood floor and wood table presets.
+- More realistic wood floor and additional material presets such as marble.
 - A fullscreen button in the top-right of the 3D preview.
 - Adjustable box corner radius in millimeters.
 - Hot foil preview using both uploaded masks and automatic gold/yellow detection.
@@ -61,7 +61,7 @@ Behavior:
 - Store the textures in the app public asset path so Vite can serve them.
 - Use diffuse map with `SRGBColorSpace`.
 - Use bump and roughness maps for table/floor surface detail.
-- Keep the existing `none`, `woodFloor`, and `woodTable` presets.
+- Keep `none` and `woodFloor`, remove the wood table preset, and add `marble` for a cleaner product-shot surface.
 - Tune repeat scale separately for floor and table so the grain looks plausible at the current package scale.
 
 ### Fullscreen Preview Button
@@ -194,6 +194,6 @@ Build and browser verification:
 - User can enable hot foil preview from auto detection, uploaded mask, or both.
 - Foil areas render as metallic gold above the artwork and respond visibly to scene angle/light.
 - Uploaded artwork colors in the default preview are closer to the original browser image than the current lit material path.
-- Wood table and floor look more realistic than the current procedural wood.
+- Wood floor and marble surfaces look more realistic than the current procedural wood.
 - The 3D preview has a working, accessible top-right fullscreen button.
 - Existing upload, rotation, dimension, export, language, lighting, and surface workflows continue to work.

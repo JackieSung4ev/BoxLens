@@ -12,7 +12,7 @@ BoxLens is a frontend-only, real-time 3D packaging mockup tool for rectangular p
 - Side artwork rotation control, defaulting to no rotation for pre-rotated designs.
 - Lighting controls for preset, intensity, direction, optional environment lighting, and environment intensity.
 - Shadows are off by default, with an optional shadow toggle.
-- Optional texture-based wood floor or wood table surface under the package.
+- Optional texture-based wood floor or marble surface under the package.
 - English and Chinese UI with automatic browser-language detection plus manual switching.
 - Fullscreen preview button in the 3D canvas.
 - PNG export of the current WebGL view.

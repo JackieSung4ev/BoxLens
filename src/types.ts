@@ -4,7 +4,7 @@ export type FaceColorMode = 'rgb' | 'cmyk';
 export type SideArtworkRotation = 'rotate90' | 'rotateMinus90' | 'none' | 'rotate180';
 export type LightingPreset = 'softbox' | 'studio' | 'crisp' | 'dramatic';
 export type LightDirection = 'frontRight' | 'frontLeft' | 'top' | 'sideRight';
-export type SurfacePreset = 'none' | 'woodFloor' | 'woodTable';
+export type SurfacePreset = 'none' | 'woodFloor' | 'marble';
 export type FoilMode = 'off' | 'auto' | 'mask' | 'autoMask';
 
 export interface BoxDimensions {

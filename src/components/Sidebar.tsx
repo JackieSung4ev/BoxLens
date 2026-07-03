@@ -23,7 +23,7 @@ const BACKGROUND_PRESETS = ['#f7f9fb', '#f3efe8', '#e8eef7', '#18202a'];
 const SIDE_ROTATION_OPTIONS: SideArtworkRotation[] = ['none', 'rotate90', 'rotateMinus90', 'rotate180'];
 const LIGHTING_PRESET_OPTIONS: LightingPreset[] = ['softbox', 'studio', 'crisp', 'dramatic'];
 const LIGHT_DIRECTION_OPTIONS: LightDirection[] = ['frontRight', 'frontLeft', 'top', 'sideRight'];
-const SURFACE_OPTIONS: SurfacePreset[] = ['none', 'woodFloor', 'woodTable'];
+const SURFACE_OPTIONS: SurfacePreset[] = ['none', 'woodFloor', 'marble'];
 
 interface SidebarProps {
   artwork: ArtworkMap;

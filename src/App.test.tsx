@@ -60,6 +60,8 @@ describe('App', () => {
     expect(screen.getByLabelText('RGB proof preview')).toBeChecked();
     expect(screen.getByLabelText('Corner radius in mm')).toHaveValue('3');
     expect(screen.getByLabelText('Surface')).toHaveValue('none');
+    expect(screen.queryByRole('option', { name: 'Wood table' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Marble' })).toBeInTheDocument();
     expect(screen.getByLabelText('Side artwork rotation')).toHaveValue('none');
     expect(screen.getByLabelText('Lighting preset')).toHaveValue('softbox');
     expect(screen.getByLabelText('Light intensity')).toHaveValue('1');
@@ -70,6 +72,7 @@ describe('App', () => {
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'on');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '3');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'off');
+    expect(screen.queryByLabelText('Front foil mode')).not.toBeInTheDocument();
   });
 
   it('auto-assigns dropped artwork files by side name', async () => {
@@ -186,12 +189,16 @@ describe('App', () => {
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-color', '#ff0000');
   });
 
-  it('lets users place the mockup on a wood surface', () => {
+  it('lets users place the mockup on wood and marble surfaces', () => {
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText('Surface'), { target: { value: 'woodTable' } });
+    fireEvent.change(screen.getByLabelText('Surface'), { target: { value: 'woodFloor' } });
 
-    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-surface', 'woodTable');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-surface', 'woodFloor');
+
+    fireEvent.change(screen.getByLabelText('Surface'), { target: { value: 'marble' } });
+
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-surface', 'marble');
   });
 
   it('lets users tune RGB proof display and box corner radius', () => {
@@ -208,6 +215,12 @@ describe('App', () => {
     render(<App />);
 
     const frontAppearance = screen.getByRole('group', { name: 'Front face appearance' });
+    const foilToggle = within(frontAppearance).getByRole('button', { name: 'Front hot foil settings' });
+
+    expect(foilToggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(foilToggle);
+    expect(foilToggle).toHaveAttribute('aria-expanded', 'true');
+
     fireEvent.change(within(frontAppearance).getByLabelText('Front foil mode'), { target: { value: 'auto' } });
 
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'auto');
@@ -226,6 +239,7 @@ describe('App', () => {
     render(<App />);
 
     const frontAppearance = screen.getByRole('group', { name: 'Front face appearance' });
+    fireEvent.click(within(frontAppearance).getByRole('button', { name: 'Front hot foil settings' }));
     fireEvent.change(within(frontAppearance).getByLabelText('Front foil mode'), { target: { value: 'mask' } });
     fireEvent.change(within(frontAppearance).getByLabelText('Front foil mask'), {
       target: {

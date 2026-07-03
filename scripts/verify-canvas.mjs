@@ -122,7 +122,7 @@ async function verifyViewport(browser, viewport) {
   if (defaultSurface !== 'none') {
     throw new Error(`${viewport.name} surface defaulted to ${defaultSurface}, expected none`);
   }
-  await surfaceSelect.selectOption(viewport.name === 'desktop' ? 'woodTable' : 'woodFloor');
+  await surfaceSelect.selectOption(viewport.name === 'desktop' ? 'marble' : 'woodFloor');
   await page.waitForTimeout(350);
 
   const screenshotPath = path.join(artifactDir, `boxlens-${viewport.name}.png`);

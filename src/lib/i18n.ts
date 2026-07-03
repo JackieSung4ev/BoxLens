@@ -68,6 +68,7 @@ export const translations = {
     faceColor: 'Face color',
     solidColorInputLabel: '{side} solid color',
     foilFinish: 'Hot foil',
+    foilToggleLabel: '{side} hot foil settings',
     foilMode: 'Foil mode',
     foilModeInputLabel: '{side} foil mode',
     foilModeOptions: {
@@ -117,7 +118,7 @@ export const translations = {
     surfaceOptions: {
       none: 'No surface',
       woodFloor: 'Wood floor',
-      woodTable: 'Wood table',
+      marble: 'Marble',
     } satisfies Record<SurfacePreset, string>,
     sideRotationOptions: {
       none: 'No rotation',
@@ -179,6 +180,7 @@ export const translations = {
     faceColor: '面颜色',
     solidColorInputLabel: '{side}纯色',
     foilFinish: '烫金',
+    foilToggleLabel: '{side}烫金设置',
     foilMode: '烫金模式',
     foilModeInputLabel: '{side}烫金模式',
     foilModeOptions: {
@@ -228,7 +230,7 @@ export const translations = {
     surfaceOptions: {
       none: '无',
       woodFloor: '木地板',
-      woodTable: '木桌',
+      marble: '大理石',
     } satisfies Record<SurfacePreset, string>,
     sideRotationOptions: {
       none: '不旋转',

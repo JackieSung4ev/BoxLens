@@ -43,6 +43,7 @@ interface SidebarProps {
   onFoilMaskUpload: (side: ArtworkSide, file: File) => void;
   onLocaleChange: (locale: Locale) => void;
   onResetCamera: () => void;
+  onResetSettings: () => void;
   onSettingsChange: (settings: RenderSettings) => void;
   settings: RenderSettings;
 }
@@ -65,6 +66,7 @@ export function Sidebar({
   onFoilMaskUpload,
   onLocaleChange,
   onResetCamera,
+  onResetSettings,
   onSettingsChange,
   settings,
 }: SidebarProps) {
@@ -167,7 +169,7 @@ export function Sidebar({
               <input
                 aria-label={copy.cameraLength}
                 className="mt-2 w-full accent-lens-600"
-                max={90}
+                max={135}
                 min={24}
                 onChange={(event) => onSettingsChange({ ...settings, cameraLengthMm: event.target.valueAsNumber })}
                 step={1}
@@ -300,6 +302,14 @@ export function Sidebar({
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <button
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 shadow-control transition hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500 sm:col-span-2 lg:col-span-1 xl:col-span-2"
+              onClick={onResetSettings}
+              type="button"
+            >
+              <RotateCcw aria-hidden="true" size={17} />
+              {copy.restoreDefaultSettings}
+            </button>
             <button
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 shadow-control transition hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
               onClick={onResetCamera}

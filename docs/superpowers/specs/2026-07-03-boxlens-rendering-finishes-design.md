@@ -101,8 +101,8 @@ Add `cameraLengthMm` to `RenderSettings`.
 
 Behavior:
 
-- Default to 50mm for a natural product-shot perspective.
-- Add a sidebar range control from 24mm to 90mm.
+- Default to 110mm for a compressed product-shot perspective.
+- Add a sidebar range control from 24mm to 135mm.
 - Lower values make the scene wider and more perspective-heavy.
 - Higher values compress perspective for a cleaner catalog-style look.
 - Apply changes through `PerspectiveCamera.setFocalLength()` without resetting the user's current orbit angle.
@@ -159,6 +159,7 @@ Additions:
 
 - Rendering section:
   - Camera lens length control in millimeters, shown as a compact slider with the current mm value.
+  - Restore default settings button that resets rendering settings only, without clearing artwork or dimensions.
 
 - Each artwork face slot:
   - Foil mode select or compact segmented control.
@@ -182,6 +183,7 @@ Unit/component tests:
 - Default settings include RGB proof display, default corner radius, and foil settings for all faces.
 - Corner radius control updates render settings and clamps invalid values.
 - Camera lens length control updates render settings and passes the value to the 3D scene.
+- Restore default settings resets rendering controls while preserving uploaded artwork and box dimensions.
 - Foil mode controls update the correct face.
 - Foil mask upload creates an object URL and remove revokes it.
 - Auto foil detection helper identifies saturated gold/yellow pixels and rejects neutral beige/gray pixels.
@@ -209,6 +211,7 @@ Build and browser verification:
 
 - User can adjust box corner radius in millimeters and the 3D box plus face artwork corners change together.
 - User can adjust camera lens length between wide-angle and compressed product-shot perspectives.
+- User can restore rendering defaults without losing uploaded artwork or edited dimensions.
 - User can enable hot foil preview from auto detection, uploaded mask, or both.
 - Foil areas render as metallic gold above the artwork and respond visibly to scene angle/light.
 - Uploaded artwork colors in the default preview are closer to the original browser image than the current lit material path.

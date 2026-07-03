@@ -59,7 +59,7 @@ describe('App', () => {
     expect(screen.getByLabelText('Environment lighting')).not.toBeChecked();
     expect(screen.getByLabelText('Shadows')).not.toBeChecked();
     expect(screen.getByLabelText('RGB proof preview')).toBeChecked();
-    expect(screen.getByLabelText('Camera lens length in mm')).toHaveValue('50');
+    expect(screen.getByLabelText('Camera lens length in mm')).toHaveValue('110');
     expect(screen.getByLabelText('Corner radius in mm')).toHaveValue('3');
     expect(screen.getByLabelText('Surface')).toHaveValue('none');
     expect(screen.queryByRole('option', { name: 'Wood table' })).not.toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('App', () => {
     expect(screen.queryByText('Upload')).not.toBeInTheDocument();
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-shadows', 'off');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'on');
-    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '50');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '110');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '3');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'off');
     expect(screen.queryByLabelText('Front foil mode')).not.toBeInTheDocument();
@@ -215,6 +215,47 @@ describe('App', () => {
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'off');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '70');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '8');
+  });
+
+  it('restores rendering controls to their defaults without clearing dimensions or artwork', async () => {
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn((file: File) => `blob:${file.name}`),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
+
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Width in mm'), { target: { value: '140' } });
+    fireEvent.drop(screen.getByRole('region', { name: 'Artwork' }), {
+      dataTransfer: {
+        files: [new File(['front'], 'front-panel.png', { type: 'image/png' })],
+      },
+    });
+    fireEvent.click(screen.getByLabelText('RGB proof preview'));
+    fireEvent.change(screen.getByLabelText('Camera lens length in mm'), { target: { value: '70' } });
+    fireEvent.change(screen.getByLabelText('Corner radius in mm'), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText('Surface'), { target: { value: 'marble' } });
+    fireEvent.click(screen.getByLabelText('Shadows'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-artwork', 'blob:front-panel.png');
+    });
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '70');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'off');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore default settings' }));
+
+    expect(screen.getByLabelText('Width in mm')).toHaveValue(140);
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-artwork', 'blob:front-panel.png');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '110');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '3');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'on');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-shadows', 'off');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-surface', 'none');
   });
 
   it('lets users enable automatic hot foil detection for a face', () => {

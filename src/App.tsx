@@ -24,7 +24,7 @@ const DEFAULT_DIMENSIONS: BoxDimensions = {
 
 const DEFAULT_SETTINGS: RenderSettings = {
   backgroundColor: '#f7f9fb',
-  cameraLengthMm: 50,
+  cameraLengthMm: 110,
   cornerRadiusMm: 3,
   shadows: false,
   environment: false,
@@ -235,6 +235,7 @@ export default function App() {
           onFoilMaskUpload={handleFoilMaskUpload}
           onLocaleChange={setLocale}
           onResetCamera={() => setResetToken((value) => value + 1)}
+          onResetSettings={() => setSettings(DEFAULT_SETTINGS)}
           onSettingsChange={setSettings}
           settings={settings}
         />

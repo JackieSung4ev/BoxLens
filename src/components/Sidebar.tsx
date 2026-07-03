@@ -69,7 +69,7 @@ export function Sidebar({
   settings,
 }: SidebarProps) {
   return (
-    <aside className="border-b border-ink-300/60 bg-white/95 px-5 py-5 shadow-panel lg:h-dvh lg:overflow-y-auto lg:border-b-0 lg:border-r">
+    <aside className="scrollbar-slim border-b border-ink-300/60 bg-white/95 px-5 py-5 shadow-panel lg:h-dvh lg:overflow-y-auto lg:border-b-0 lg:border-r">
       <div className="space-y-6">
         <header className="space-y-3">
           <div className="flex items-center gap-3">

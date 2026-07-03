@@ -73,6 +73,7 @@ describe('App', () => {
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '3');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'off');
     expect(screen.queryByLabelText('Front foil mode')).not.toBeInTheDocument();
+    expect(container.querySelector('aside')).toHaveClass('scrollbar-slim');
   });
 
   it('auto-assigns dropped artwork files by side name', async () => {

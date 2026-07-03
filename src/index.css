@@ -45,3 +45,25 @@ label {
 canvas {
   display: block;
 }
+
+.scrollbar-slim {
+  scrollbar-color: rgba(124, 141, 163, 0.42) transparent;
+  scrollbar-width: thin;
+}
+
+.scrollbar-slim::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-slim::-webkit-scrollbar-thumb {
+  background-color: rgba(124, 141, 163, 0.38);
+  border-radius: 999px;
+}
+
+.scrollbar-slim::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.54);
+}

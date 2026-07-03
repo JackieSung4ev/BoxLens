@@ -12,10 +12,11 @@ vi.mock('./components/Scene', () => ({
     artwork?: { front?: { url: string }; back?: { url: string } };
     faceAppearance?: { front?: { color: string; mode: string } };
     finishSettings?: { front?: { mask?: { url: string }; mode: string } };
-    settings?: { cornerRadiusMm: number; rgbProof: boolean; shadows: boolean; surface: string };
+    settings?: { cameraLengthMm: number; cornerRadiusMm: number; rgbProof: boolean; shadows: boolean; surface: string };
   }) => (
     <div
       data-back-artwork={artwork?.back?.url}
+      data-camera-length={settings?.cameraLengthMm}
       data-corner-radius={settings?.cornerRadiusMm}
       data-front-foil-mask={finishSettings?.front?.mask?.url}
       data-front-foil-mode={finishSettings?.front?.mode}
@@ -58,6 +59,7 @@ describe('App', () => {
     expect(screen.getByLabelText('Environment lighting')).not.toBeChecked();
     expect(screen.getByLabelText('Shadows')).not.toBeChecked();
     expect(screen.getByLabelText('RGB proof preview')).toBeChecked();
+    expect(screen.getByLabelText('Camera lens length in mm')).toHaveValue('50');
     expect(screen.getByLabelText('Corner radius in mm')).toHaveValue('3');
     expect(screen.getByLabelText('Surface')).toHaveValue('none');
     expect(screen.queryByRole('option', { name: 'Wood table' })).not.toBeInTheDocument();
@@ -70,6 +72,7 @@ describe('App', () => {
     expect(screen.queryByText('Upload')).not.toBeInTheDocument();
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-shadows', 'off');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'on');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '50');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '3');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'off');
     expect(screen.queryByLabelText('Front foil mode')).not.toBeInTheDocument();
@@ -202,13 +205,15 @@ describe('App', () => {
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-surface', 'marble');
   });
 
-  it('lets users tune RGB proof display and box corner radius', () => {
+  it('lets users tune RGB proof display, camera lens length, and box corner radius', () => {
     render(<App />);
 
     fireEvent.click(screen.getByLabelText('RGB proof preview'));
+    fireEvent.change(screen.getByLabelText('Camera lens length in mm'), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText('Corner radius in mm'), { target: { value: '8' } });
 
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'off');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '70');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '8');
   });
 

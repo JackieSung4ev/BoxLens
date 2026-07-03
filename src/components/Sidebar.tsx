@@ -161,6 +161,23 @@ export function Sidebar({
 
             <label className="block rounded-lg border border-ink-100 px-3 py-2">
               <span className="flex items-center justify-between gap-3 text-sm font-medium text-ink-900">
+                {copy.cameraLength}
+                <span className="tabular-nums text-xs text-ink-500">{settings.cameraLengthMm.toFixed(0)} mm</span>
+              </span>
+              <input
+                aria-label={copy.cameraLength}
+                className="mt-2 w-full accent-lens-600"
+                max={90}
+                min={24}
+                onChange={(event) => onSettingsChange({ ...settings, cameraLengthMm: event.target.valueAsNumber })}
+                step={1}
+                type="range"
+                value={settings.cameraLengthMm}
+              />
+            </label>
+
+            <label className="block rounded-lg border border-ink-100 px-3 py-2">
+              <span className="flex items-center justify-between gap-3 text-sm font-medium text-ink-900">
                 {copy.cornerRadius}
                 <span className="tabular-nums text-xs text-ink-500">{settings.cornerRadiusMm.toFixed(0)} mm</span>
               </span>

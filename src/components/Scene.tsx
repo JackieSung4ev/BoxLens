@@ -7,6 +7,7 @@ import {
   CanvasTexture,
   DoubleSide,
   PCFSoftShadowMap,
+  PerspectiveCamera,
   RepeatWrapping,
   SRGBColorSpace,
   type Texture,
@@ -160,7 +161,11 @@ export function Scene({
         gl={{ alpha: false, antialias: true, preserveDrawingBuffer: true }}
         shadows={settings.shadows}
       >
-        <RendererSetup onCanvasReady={onCanvasReady} shadows={settings.shadows} />
+        <RendererSetup
+          cameraLengthMm={settings.cameraLengthMm}
+          onCanvasReady={onCanvasReady}
+          shadows={settings.shadows}
+        />
         <color args={[settings.backgroundColor]} attach="background" />
         <fog attach="fog" args={[settings.backgroundColor, 8, 13]} />
         <ambientLight intensity={lighting.ambient * lightScale} />
@@ -408,9 +413,11 @@ function SoftGroundShadow({
 }
 
 function RendererSetup({
+  cameraLengthMm,
   onCanvasReady,
   shadows,
 }: {
+  cameraLengthMm: number;
   onCanvasReady: (canvas: HTMLCanvasElement | null) => void;
   shadows: boolean;
 }) {
@@ -420,15 +427,26 @@ function RendererSetup({
     camera.position.copy(CAMERA_POSITION);
     camera.lookAt(0, 0, 0);
     camera.updateMatrixWorld();
+    onCanvasReady(gl.domElement);
+
+    return () => onCanvasReady(null);
+  }, [camera, gl, onCanvasReady]);
+
+  useEffect(() => {
+    if (camera instanceof PerspectiveCamera) {
+      camera.setFocalLength(cameraLengthMm);
+      camera.updateProjectionMatrix();
+      invalidate();
+    }
+  }, [camera, cameraLengthMm, invalidate]);
+
+  useEffect(() => {
     gl.toneMapping = ACESFilmicToneMapping;
     gl.outputColorSpace = SRGBColorSpace;
     gl.shadowMap.enabled = shadows;
     gl.shadowMap.type = PCFSoftShadowMap;
     invalidate();
-    onCanvasReady(gl.domElement);
-
-    return () => onCanvasReady(null);
-  }, [camera, gl, invalidate, onCanvasReady, shadows]);
+  }, [gl, invalidate, shadows]);
 
   return null;
 }

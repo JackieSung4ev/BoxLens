@@ -59,6 +59,7 @@ export type FaceAppearanceMap = Record<ArtworkSide, FaceAppearance>;
 
 export interface RenderSettings {
   backgroundColor: string;
+  cameraLengthMm: number;
   cornerRadiusMm: number;
   shadows: boolean;
   environment: boolean;

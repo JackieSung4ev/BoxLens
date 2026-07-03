@@ -4,7 +4,7 @@ BoxLens is a frontend-only, real-time 3D packaging mockup tool for rectangular p
 
 ## Features
 
-- Live 3D box preview with editable width, height, depth, and corner radius in millimeters.
+- Live 3D box preview with editable width, height, depth, corner radius, and camera lens length in millimeters.
 - Drag-and-drop artwork upload for each face, with folder/file auto-matching for side names such as front, back, left, right, top, and bottom.
 - Per-face appearance modes: artwork or solid color.
 - Solid color editing in RGB or CMYK inputs, with an RGB proof preview toggle to reduce artwork color shifts in the 3D view.

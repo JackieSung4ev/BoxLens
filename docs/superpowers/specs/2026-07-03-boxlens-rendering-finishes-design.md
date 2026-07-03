@@ -10,6 +10,7 @@ Improve BoxLens so packaging previews are closer to uploaded artwork while addin
 - More realistic wood floor and additional material presets such as marble.
 - A fullscreen button in the top-right of the 3D preview.
 - Adjustable box corner radius in millimeters.
+- Adjustable camera lens length for wider or more compressed product-shot perspective.
 - Hot foil preview using both uploaded masks and automatic gold/yellow detection.
 
 The feature remains a browser-side 3D preview. It is not an ICC-managed print proof or a replacement for Illustrator/press output checks.
@@ -94,6 +95,18 @@ Implementation direction:
 - Keep UVs compatible with existing cover texture transforms.
 - Use the same rounded geometry for artwork, solid color, placeholders, and foil overlays.
 
+### Adjustable Camera Lens Length
+
+Add `cameraLengthMm` to `RenderSettings`.
+
+Behavior:
+
+- Default to 50mm for a natural product-shot perspective.
+- Add a sidebar range control from 24mm to 90mm.
+- Lower values make the scene wider and more perspective-heavy.
+- Higher values compress perspective for a cleaner catalog-style look.
+- Apply changes through `PerspectiveCamera.setFocalLength()` without resetting the user's current orbit angle.
+
 ### Hot Foil Preview
 
 Add a per-face finishing layer for hot foil.
@@ -144,6 +157,9 @@ Additions:
 - Box dimensions section:
   - Corner radius control in millimeters, using a range/input pair or compact numeric input with slider.
 
+- Rendering section:
+  - Camera lens length control in millimeters, shown as a compact slider with the current mm value.
+
 - Each artwork face slot:
   - Foil mode select or compact segmented control.
   - Upload/remove foil mask controls when a mask-based mode is selected.
@@ -165,6 +181,7 @@ Unit/component tests:
 
 - Default settings include RGB proof display, default corner radius, and foil settings for all faces.
 - Corner radius control updates render settings and clamps invalid values.
+- Camera lens length control updates render settings and passes the value to the 3D scene.
 - Foil mode controls update the correct face.
 - Foil mask upload creates an object URL and remove revokes it.
 - Auto foil detection helper identifies saturated gold/yellow pixels and rejects neutral beige/gray pixels.
@@ -191,6 +208,7 @@ Build and browser verification:
 ## Acceptance Criteria
 
 - User can adjust box corner radius in millimeters and the 3D box plus face artwork corners change together.
+- User can adjust camera lens length between wide-angle and compressed product-shot perspectives.
 - User can enable hot foil preview from auto detection, uploaded mask, or both.
 - Foil areas render as metallic gold above the artwork and respond visibly to scene angle/light.
 - Uploaded artwork colors in the default preview are closer to the original browser image than the current lit material path.

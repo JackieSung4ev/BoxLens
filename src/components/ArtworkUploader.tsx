@@ -1,5 +1,5 @@
 import type { DragEvent } from 'react';
-import { Droplet, Image as ImageIcon, ImagePlus, Trash2, Upload } from 'lucide-react';
+import { Droplet, Image as ImageIcon, ImagePlus, Sparkles, Trash2, Upload } from 'lucide-react';
 import { isArtworkImageFile, matchArtworkFilesBySide, matchArtworkSideByFilename } from '../lib/artworkAutoMatch';
 import { ARTWORK_SIDES } from '../lib/boxGeometry';
 import {
@@ -20,6 +20,9 @@ import type {
   FaceAppearance,
   FaceAppearanceMap,
   FaceColorMode,
+  FinishSettingsMap,
+  FoilMode,
+  FoilSettings,
   RgbColor,
 } from '../types';
 
@@ -27,10 +30,16 @@ interface ArtworkUploaderProps {
   artwork: ArtworkMap;
   copy: Translation;
   faceAppearance: FaceAppearanceMap;
+  finishSettings: FinishSettingsMap;
   onAppearanceChange: (side: ArtworkSide, appearance: Partial<FaceAppearance>) => void;
+  onFinishChange: (side: ArtworkSide, finish: Partial<FoilSettings>) => void;
+  onFoilMaskRemove: (side: ArtworkSide) => void;
+  onFoilMaskUpload: (side: ArtworkSide, file: File) => void;
   onRemove: (side: ArtworkSide) => void;
   onUpload: (side: ArtworkSide, file: File) => void;
 }
+
+const FOIL_MODE_OPTIONS: FoilMode[] = ['off', 'auto', 'mask', 'autoMask'];
 
 type DataTransferItemWithEntry = DataTransferItem & {
   webkitGetAsEntry?: () => FileSystemEntry | null;
@@ -104,7 +113,18 @@ function attachEntryPath(file: File, fullPath: string): File {
   return file;
 }
 
-export function ArtworkUploader({ artwork, copy, faceAppearance, onAppearanceChange, onRemove, onUpload }: ArtworkUploaderProps) {
+export function ArtworkUploader({
+  artwork,
+  copy,
+  faceAppearance,
+  finishSettings,
+  onAppearanceChange,
+  onFinishChange,
+  onFoilMaskRemove,
+  onFoilMaskUpload,
+  onRemove,
+  onUpload,
+}: ArtworkUploaderProps) {
   const handleArtworkDrop = async (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     const files = await collectDroppedFiles(event.dataTransfer);
@@ -134,8 +154,12 @@ export function ArtworkUploader({ artwork, copy, faceAppearance, onAppearanceCha
             asset={artwork[side]}
             appearance={faceAppearance[side]}
             copy={copy}
+            finish={finishSettings[side]}
             key={side}
             onAppearanceChange={(appearance) => onAppearanceChange(side, appearance)}
+            onFinishChange={(finish) => onFinishChange(side, finish)}
+            onFoilMaskRemove={() => onFoilMaskRemove(side)}
+            onFoilMaskUpload={(file) => onFoilMaskUpload(side, file)}
             onRemove={() => onRemove(side)}
             onUpload={(file) => onUpload(side, file)}
             side={side}
@@ -150,16 +174,33 @@ interface ArtworkSlotProps {
   asset?: ArtworkAsset;
   appearance: FaceAppearance;
   copy: Translation;
+  finish: FoilSettings;
   onAppearanceChange: (appearance: Partial<FaceAppearance>) => void;
+  onFinishChange: (finish: Partial<FoilSettings>) => void;
+  onFoilMaskRemove: () => void;
+  onFoilMaskUpload: (file: File) => void;
   onRemove: () => void;
   onUpload: (file: File) => void;
   side: ArtworkSide;
 }
 
-function ArtworkSlot({ asset, appearance, copy, onAppearanceChange, onRemove, onUpload, side }: ArtworkSlotProps) {
+function ArtworkSlot({
+  asset,
+  appearance,
+  copy,
+  finish,
+  onAppearanceChange,
+  onFinishChange,
+  onFoilMaskRemove,
+  onFoilMaskUpload,
+  onRemove,
+  onUpload,
+  side,
+}: ArtworkSlotProps) {
   const sideLabel = copy.sides[side];
   const appearanceName = `${side}-face-appearance`;
   const isArtworkMode = appearance.mode === 'artwork';
+  const usesFoilMask = finish.mode === 'mask' || finish.mode === 'autoMask';
 
   const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -269,6 +310,95 @@ function ArtworkSlot({ asset, appearance, copy, onAppearanceChange, onRemove, on
                 sideLabel={sideLabel}
               />
             ) : null}
+            <div className="space-y-2 rounded-lg border border-proof-200 bg-proof-100/55 p-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-normal text-ink-600">
+                <Sparkles aria-hidden="true" className="text-proof-500" size={13} />
+                {copy.foilFinish}
+              </div>
+              <label className="grid gap-1">
+                <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.foilMode}</span>
+                <select
+                  aria-label={formatMessage(copy.foilModeInputLabel, { side: sideLabel })}
+                  className="h-9 w-full rounded-lg border border-ink-300 bg-white px-2 text-xs font-semibold text-ink-950 shadow-control outline-none transition focus:border-lens-500 focus:ring-2 focus:ring-lens-100"
+                  onChange={(event) => onFinishChange({ mode: event.target.value as FoilMode })}
+                  value={finish.mode}
+                >
+                  {FOIL_MODE_OPTIONS.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {copy.foilModeOptions[mode]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+                <label className="grid gap-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.foilColor}</span>
+                  <span className="flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="h-8 w-8 rounded-md border border-ink-300"
+                      style={{ backgroundColor: finish.color }}
+                    />
+                    <input
+                      aria-label={formatMessage(copy.foilColorInputLabel, { side: sideLabel })}
+                      className="h-8 w-12 cursor-pointer rounded-lg border border-ink-300 bg-white p-1"
+                      onChange={(event) => onFinishChange({ color: event.target.value })}
+                      type="color"
+                      value={finish.color}
+                    />
+                  </span>
+                </label>
+
+                <label className="grid min-w-0 gap-1">
+                  <span className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-normal text-ink-500">
+                    {copy.foilIntensity}
+                    <span className="tabular-nums">{Math.round(finish.intensity * 100)}%</span>
+                  </span>
+                  <input
+                    aria-label={formatMessage(copy.foilIntensityInputLabel, { side: sideLabel })}
+                    className="h-8 w-full accent-proof-500"
+                    max={1}
+                    min={0.2}
+                    onChange={(event) => onFinishChange({ intensity: event.target.valueAsNumber })}
+                    step={0.05}
+                    type="range"
+                    value={finish.intensity}
+                  />
+                </label>
+              </div>
+
+              {usesFoilMask ? (
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-lg border border-dashed border-proof-300 bg-white px-3 text-xs font-semibold text-ink-700 transition hover:border-proof-500 hover:text-ink-950">
+                    <input
+                      accept="image/*"
+                      aria-label={formatMessage(copy.foilMaskInputLabel, { side: sideLabel })}
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0];
+                        if (file) {
+                          onFoilMaskUpload(file);
+                          event.currentTarget.value = '';
+                        }
+                      }}
+                      type="file"
+                    />
+                    {finish.mask?.file.name ?? copy.foilMask}
+                  </label>
+                  {finish.mask ? (
+                    <button
+                      aria-label={formatMessage(copy.removeFoilMask, { side: sideLabel })}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white hover:text-ink-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
+                      onClick={onFoilMaskRemove}
+                      type="button"
+                    >
+                      <Trash2 aria-hidden="true" size={16} />
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </fieldset>
         </div>
       </div>

@@ -11,6 +11,8 @@ import type {
   BoxDimensions,
   FaceAppearance,
   FaceAppearanceMap,
+  FinishSettingsMap,
+  FoilSettings,
   RenderSettings,
 } from './types';
 
@@ -22,12 +24,14 @@ const DEFAULT_DIMENSIONS: BoxDimensions = {
 
 const DEFAULT_SETTINGS: RenderSettings = {
   backgroundColor: '#f7f9fb',
+  cornerRadiusMm: 3,
   shadows: false,
   environment: false,
   environmentIntensity: 0.22,
   lightingPreset: 'softbox',
   lightDirection: 'frontRight',
   lightIntensity: 1,
+  rgbProof: true,
   sideArtworkRotation: 'none',
   surface: 'none',
 };
@@ -44,15 +48,26 @@ const DEFAULT_FACE_APPEARANCE = ARTWORK_SIDES.reduce((appearance, side) => {
   return appearance;
 }, {} as FaceAppearanceMap);
 
+const DEFAULT_FINISH_SETTINGS = ARTWORK_SIDES.reduce((settings, side) => {
+  settings[side] = {
+    color: '#d4af37',
+    intensity: 0.85,
+    mode: 'off',
+  };
+  return settings;
+}, {} as FinishSettingsMap);
+
 export default function App() {
   const [dimensions, setDimensions] = useState<BoxDimensions>(DEFAULT_DIMENSIONS);
   const [artwork, setArtwork] = useState<ArtworkMap>({});
   const [faceAppearance, setFaceAppearance] = useState<FaceAppearanceMap>(DEFAULT_FACE_APPEARANCE);
+  const [finishSettings, setFinishSettings] = useState<FinishSettingsMap>(DEFAULT_FINISH_SETTINGS);
   const [settings, setSettings] = useState<RenderSettings>(DEFAULT_SETTINGS);
   const [locale, setLocale] = useState<Locale>(() => detectLocale());
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
   const [resetToken, setResetToken] = useState(0);
   const artworkRef = useRef(artwork);
+  const finishSettingsRef = useRef(finishSettings);
   const copy = useMemo(() => translations[locale], [locale]);
 
   useEffect(() => {
@@ -60,10 +75,19 @@ export default function App() {
   }, [artwork]);
 
   useEffect(() => {
+    finishSettingsRef.current = finishSettings;
+  }, [finishSettings]);
+
+  useEffect(() => {
     return () => {
       Object.values(artworkRef.current).forEach((asset) => {
         if (asset) {
           URL.revokeObjectURL(asset.url);
+        }
+      });
+      Object.values(finishSettingsRef.current).forEach((finish) => {
+        if (finish.mask) {
+          URL.revokeObjectURL(finish.mask.url);
         }
       });
     };
@@ -126,6 +150,56 @@ export default function App() {
     }));
   }, []);
 
+  const handleFinishSettingsChange = useCallback((side: ArtworkSide, finish: Partial<FoilSettings>) => {
+    setFinishSettings((current) => ({
+      ...current,
+      [side]: {
+        ...current[side],
+        ...finish,
+      },
+    }));
+  }, []);
+
+  const handleFoilMaskUpload = useCallback((side: ArtworkSide, file: File) => {
+    const nextAsset: ArtworkAsset = {
+      file,
+      url: URL.createObjectURL(file),
+    };
+
+    setFinishSettings((current) => {
+      const previousMask = current[side].mask;
+      if (previousMask) {
+        URL.revokeObjectURL(previousMask.url);
+      }
+
+      return {
+        ...current,
+        [side]: {
+          ...current[side],
+          mask: nextAsset,
+          mode: current[side].mode === 'autoMask' ? 'autoMask' : 'mask',
+        },
+      };
+    });
+  }, []);
+
+  const handleFoilMaskRemove = useCallback((side: ArtworkSide) => {
+    setFinishSettings((current) => {
+      const previousMask = current[side].mask;
+      if (previousMask) {
+        URL.revokeObjectURL(previousMask.url);
+      }
+
+      return {
+        ...current,
+        [side]: {
+          ...current[side],
+          mask: undefined,
+        },
+      };
+    });
+  }, []);
+
   const handleExport = useCallback(() => {
     if (!canvasElement) {
       return;
@@ -148,12 +222,16 @@ export default function App() {
           dimensions={dimensions}
           exportDisabled={!canvasElement}
           faceAppearance={faceAppearance}
+          finishSettings={finishSettings}
           locale={locale}
           onFaceAppearanceChange={handleFaceAppearanceChange}
           onArtworkRemove={handleArtworkRemove}
           onArtworkUpload={handleArtworkUpload}
           onDimensionChange={handleDimensionChange}
           onExport={handleExport}
+          onFinishSettingsChange={handleFinishSettingsChange}
+          onFoilMaskRemove={handleFoilMaskRemove}
+          onFoilMaskUpload={handleFoilMaskUpload}
           onLocaleChange={setLocale}
           onResetCamera={() => setResetToken((value) => value + 1)}
           onSettingsChange={setSettings}
@@ -164,6 +242,7 @@ export default function App() {
             artwork={artwork}
             dimensions={dimensions}
             faceAppearance={faceAppearance}
+            finishSettings={finishSettings}
             onCanvasReady={setCanvasElement}
             resetToken={resetToken}
             settings={settings}

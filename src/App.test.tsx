@@ -6,17 +6,23 @@ vi.mock('./components/Scene', () => ({
   Scene: ({
     artwork,
     faceAppearance,
+    finishSettings,
     settings,
   }: {
     artwork?: { front?: { url: string }; back?: { url: string } };
     faceAppearance?: { front?: { color: string; mode: string } };
-    settings?: { shadows: boolean; surface: string };
+    finishSettings?: { front?: { mask?: { url: string }; mode: string } };
+    settings?: { cornerRadiusMm: number; rgbProof: boolean; shadows: boolean; surface: string };
   }) => (
     <div
       data-back-artwork={artwork?.back?.url}
+      data-corner-radius={settings?.cornerRadiusMm}
+      data-front-foil-mask={finishSettings?.front?.mask?.url}
+      data-front-foil-mode={finishSettings?.front?.mode}
       data-front-artwork={artwork?.front?.url}
       data-front-color={faceAppearance?.front?.color}
       data-front-mode={faceAppearance?.front?.mode}
+      data-rgb-proof={settings?.rgbProof ? 'on' : 'off'}
       data-shadows={settings?.shadows ? 'on' : 'off'}
       data-surface={settings?.surface}
       data-testid="scene-preview"
@@ -51,6 +57,8 @@ describe('App', () => {
     expect(container.innerHTML).toContain('grid-cols-[88px_minmax(0,1fr)] items-end');
     expect(screen.getByLabelText('Environment lighting')).not.toBeChecked();
     expect(screen.getByLabelText('Shadows')).not.toBeChecked();
+    expect(screen.getByLabelText('RGB proof preview')).toBeChecked();
+    expect(screen.getByLabelText('Corner radius in mm')).toHaveValue('3');
     expect(screen.getByLabelText('Surface')).toHaveValue('none');
     expect(screen.getByLabelText('Side artwork rotation')).toHaveValue('none');
     expect(screen.getByLabelText('Lighting preset')).toHaveValue('softbox');
@@ -59,6 +67,9 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /export png/i })).toBeDisabled();
     expect(screen.queryByText('Upload')).not.toBeInTheDocument();
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-shadows', 'off');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'on');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '3');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'off');
   });
 
   it('auto-assigns dropped artwork files by side name', async () => {
@@ -181,6 +192,54 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Surface'), { target: { value: 'woodTable' } });
 
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-surface', 'woodTable');
+  });
+
+  it('lets users tune RGB proof display and box corner radius', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText('RGB proof preview'));
+    fireEvent.change(screen.getByLabelText('Corner radius in mm'), { target: { value: '8' } });
+
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'off');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '8');
+  });
+
+  it('lets users enable automatic hot foil detection for a face', () => {
+    render(<App />);
+
+    const frontAppearance = screen.getByRole('group', { name: 'Front face appearance' });
+    fireEvent.change(within(frontAppearance).getByLabelText('Front foil mode'), { target: { value: 'auto' } });
+
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'auto');
+  });
+
+  it('lets users upload and remove a hot foil mask for a face', () => {
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn((file: File) => `blob:${file.name}`),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
+
+    render(<App />);
+
+    const frontAppearance = screen.getByRole('group', { name: 'Front face appearance' });
+    fireEvent.change(within(frontAppearance).getByLabelText('Front foil mode'), { target: { value: 'mask' } });
+    fireEvent.change(within(frontAppearance).getByLabelText('Front foil mask'), {
+      target: {
+        files: [new File(['foil'], 'foil-mask.png', { type: 'image/png' })],
+      },
+    });
+
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mode', 'mask');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-foil-mask', 'blob:foil-mask.png');
+
+    fireEvent.click(within(frontAppearance).getByRole('button', { name: 'Remove Front foil mask' }));
+
+    expect(screen.getByTestId('scene-preview')).not.toHaveAttribute('data-front-foil-mask');
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:foil-mask.png');
   });
 
   it('keeps dimensions first and places language at the bottom of the sidebar', () => {

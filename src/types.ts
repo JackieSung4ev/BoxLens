@@ -5,6 +5,7 @@ export type SideArtworkRotation = 'rotate90' | 'rotateMinus90' | 'none' | 'rotat
 export type LightingPreset = 'softbox' | 'studio' | 'crisp' | 'dramatic';
 export type LightDirection = 'frontRight' | 'frontLeft' | 'top' | 'sideRight';
 export type SurfacePreset = 'none' | 'woodFloor' | 'woodTable';
+export type FoilMode = 'off' | 'auto' | 'mask' | 'autoMask';
 
 export interface BoxDimensions {
   width: number;
@@ -24,6 +25,15 @@ export interface ArtworkAsset {
 }
 
 export type ArtworkMap = Partial<Record<ArtworkSide, ArtworkAsset>>;
+
+export interface FoilSettings {
+  color: string;
+  intensity: number;
+  mask?: ArtworkAsset;
+  mode: FoilMode;
+}
+
+export type FinishSettingsMap = Record<ArtworkSide, FoilSettings>;
 
 export interface RgbColor {
   r: number;
@@ -49,12 +59,14 @@ export type FaceAppearanceMap = Record<ArtworkSide, FaceAppearance>;
 
 export interface RenderSettings {
   backgroundColor: string;
+  cornerRadiusMm: number;
   shadows: boolean;
   environment: boolean;
   environmentIntensity: number;
   lightingPreset: LightingPreset;
   lightDirection: LightDirection;
   lightIntensity: number;
+  rgbProof: boolean;
   sideArtworkRotation: SideArtworkRotation;
   surface: SurfacePreset;
 }

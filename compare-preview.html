@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>BoxLens 3D Color / Wood Preview</title>
+    <style>
+      :root {
+        color: #18202a;
+        background: #eef2f5;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-synthesis: none;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+      }
+
+      button,
+      input,
+      label {
+        touch-action: manipulation;
+      }
+
+      .shell {
+        display: grid;
+        min-height: 100dvh;
+        grid-template-rows: auto 1fr;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 18px 22px;
+        border-bottom: 1px solid rgba(117, 129, 146, 0.25);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(16px);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.25;
+      }
+
+      .subtitle {
+        margin: 5px 0 0;
+        color: #5f6d7e;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 42px;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid #cfd7e2;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 9px 13px;
+        color: #1b2532;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 8px 24px rgba(30, 41, 59, 0.08);
+      }
+
+      .button.primary {
+        border-color: #0f172a;
+        background: #0f172a;
+        color: #ffffff;
+      }
+
+      .button:focus-visible {
+        outline: 3px solid rgba(52, 120, 246, 0.35);
+        outline-offset: 2px;
+      }
+
+      .file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+        gap: 16px;
+        min-height: 0;
+        padding: 16px;
+      }
+
+      .panel {
+        border: 1px solid rgba(117, 129, 146, 0.25);
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 16px 40px rgba(30, 41, 59, 0.1);
+      }
+
+      .input-panel {
+        display: flex;
+        min-height: 0;
+        flex-direction: column;
+        padding: 16px;
+      }
+
+      .dropzone {
+        display: grid;
+        min-height: 180px;
+        place-items: center;
+        border: 1px dashed #9aa8ba;
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(52, 120, 246, 0.07), rgba(20, 184, 166, 0.06)),
+          #f8fafc;
+        padding: 18px;
+        text-align: center;
+      }
+
+      .dropzone.dragover {
+        border-color: #3478f6;
+        background: #eef5ff;
+      }
+
+      .dropzone strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 15px;
+      }
+
+      .dropzone span {
+        color: #5f6d7e;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .thumb-wrap {
+        margin-top: 14px;
+      }
+
+      .thumb-label {
+        margin: 0 0 8px;
+        color: #5f6d7e;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .thumb {
+        display: block;
+        width: 100%;
+        max-height: 240px;
+        border: 1px solid #d7dee8;
+        border-radius: 8px;
+        object-fit: contain;
+        background: #f8fafc;
+      }
+
+      .notes {
+        margin-top: auto;
+        padding-top: 14px;
+        color: #4b5868;
+        font-size: 12px;
+        line-height: 1.65;
+      }
+
+      .notes code {
+        border-radius: 5px;
+        background: #eef2f5;
+        padding: 2px 5px;
+      }
+
+      .compare-grid {
+        display: grid;
+        min-height: 0;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .viewer {
+        position: relative;
+        display: grid;
+        min-height: 640px;
+        overflow: hidden;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .viewer header {
+        display: flex;
+        min-height: 64px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid rgba(117, 129, 146, 0.18);
+        padding: 12px 14px;
+      }
+
+      .viewer h2 {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .viewer p {
+        margin: 3px 0 0;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .badge {
+        flex: none;
+        border-radius: 999px;
+        background: #eef2f5;
+        padding: 5px 9px;
+        color: #405064;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .badge.good {
+        background: #dff8ee;
+        color: #087348;
+      }
+
+      .canvas-wrap {
+        position: relative;
+        min-height: 0;
+      }
+
+      .canvas-wrap canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .dimension-chip {
+        pointer-events: none;
+        position: absolute;
+        left: 14px;
+        top: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.84);
+        padding: 8px 10px;
+        color: #263241;
+        font-size: 12px;
+        font-weight: 800;
+        box-shadow: 0 10px 28px rgba(30, 41, 59, 0.12);
+        backdrop-filter: blur(12px);
+      }
+
+      .fullscreen-ghost {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        display: inline-flex;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.74);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.86);
+        color: #263241;
+        box-shadow: 0 10px 28px rgba(30, 41, 59, 0.14);
+        backdrop-filter: blur(12px);
+      }
+
+      .fullscreen-ghost svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      @media (max-width: 1180px) {
+        .content {
+          grid-template-columns: 1fr;
+        }
+
+        .input-panel {
+          min-height: auto;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .topbar {
+          grid-template-columns: 1fr;
+        }
+
+        .actions {
+          justify-content: stretch;
+        }
+
+        .button {
+          flex: 1;
+        }
+
+        .compare-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .viewer {
+          min-height: 520px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <h1>BoxLens 本地 3D 色彩 / 木纹对比预览</h1>
+          <p class="subtitle">
+            选择你的包装平面图后，左侧模拟现在的灯光材质效果，右侧模拟 RGB 校样贴图 + 真实木纹贴图方向。
+          </p>
+        </div>
+        <div class="actions">
+          <label class="button primary" for="artwork-file">选择平面图</label>
+          <input id="artwork-file" class="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" />
+          <button class="button" id="sample-button" type="button">使用示例图</button>
+          <button class="button" id="download-button" type="button">保存对比 PNG</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <aside class="panel input-panel">
+          <div class="dropzone" id="dropzone">
+            <div>
+              <strong>把你的平面图拖到这里</strong>
+              <span>支持 PNG / JPG / WebP / SVG。文件只在本地浏览器里解码，不会上传。</span>
+            </div>
+          </div>
+
+          <div class="thumb-wrap">
+            <p class="thumb-label">原始 RGB 图像预览</p>
+            <img class="thumb" id="source-thumb" alt="Uploaded artwork preview" />
+          </div>
+
+          <div class="notes">
+            <p>
+              观察重点：右侧包装正面的颜色应该更接近左边缩略图；木地板/木桌使用 three.js 示例里的
+              <code>hardwood2</code> diffuse / bump / roughness 贴图。
+            </p>
+            <p>
+              说明：如果原始文件是 CMYK JPEG，浏览器会先把它解码成 RGB；这个预览验证的是 3D 渲染阶段是否继续改变颜色。
+            </p>
+          </div>
+        </aside>
+
+        <section class="compare-grid" aria-label="3D render comparison">
+          <article class="panel viewer">
+            <header>
+              <div>
+                <h2>当前方向</h2>
+                <p>包装贴图参与场景光照；木纹为程序生成，容易显得假。</p>
+              </div>
+              <span class="badge">Current</span>
+            </header>
+            <div class="canvas-wrap" id="current-wrap">
+              <div class="dimension-chip">120 x 180 x 60 mm</div>
+            </div>
+          </article>
+
+          <article class="panel viewer">
+            <header>
+              <div>
+                <h2>建议方向</h2>
+                <p>包装图走 RGB 校样材质；桌面/地板走真实贴图和凹凸粗糙度。</p>
+              </div>
+              <span class="badge good">RGB proof</span>
+            </header>
+            <div class="canvas-wrap" id="proof-wrap">
+              <div class="dimension-chip">120 x 180 x 60 mm</div>
+              <div class="fullscreen-ghost" title="最终功能里的全屏按钮位置" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                  <path d="M16 3h3a2 2 0 0 1 2 2v3" />
+                  <path d="M8 21H5a2 2 0 0 1-2-2v-3" />
+                  <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                </svg>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+      const BOX_SIZE = { width: 1.2, height: 1.8, depth: 0.6 };
+      const CAMERA_POSITION = new THREE.Vector3(3.35, 2.35, 4.25);
+      const LIGHTS = {
+        key: [3.5, 4.5, 4.2],
+        fill: [-4, 2.2, -2.8],
+        spot: [-3.5, 5.2, 4.8],
+      };
+
+      const fileInput = document.querySelector('#artwork-file');
+      const dropzone = document.querySelector('#dropzone');
+      const thumb = document.querySelector('#source-thumb');
+      const sampleButton = document.querySelector('#sample-button');
+      const downloadButton = document.querySelector('#download-button');
+
+      const currentPreview = createPreview({
+        container: document.querySelector('#current-wrap'),
+        mode: 'current',
+      });
+      const proofPreview = createPreview({
+        container: document.querySelector('#proof-wrap'),
+        mode: 'proof',
+      });
+
+      setArtworkUrl(createSampleArtworkUrl());
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files?.[0];
+        if (file) {
+          loadLocalArtwork(file);
+        }
+      });
+
+      sampleButton.addEventListener('click', () => setArtworkUrl(createSampleArtworkUrl()));
+      downloadButton.addEventListener('click', downloadComparison);
+
+      dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('dragover');
+        const file = event.dataTransfer?.files?.[0];
+        if (file) {
+          loadLocalArtwork(file);
+        }
+      });
+
+      function loadLocalArtwork(file) {
+        const url = URL.createObjectURL(file);
+        setArtworkUrl(url);
+      }
+
+      function setArtworkUrl(url) {
+        thumb.src = url;
+        currentPreview.setArtwork(url);
+        proofPreview.setArtwork(url);
+      }
+
+      function createPreview({ container, mode }) {
+        const renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: false,
+          preserveDrawingBuffer: true,
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = mode === 'current' ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(mode === 'current' ? '#f3efe8' : '#f7f9fb');
+        scene.fog = new THREE.Fog(scene.background, 8, 13);
+
+        const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+        camera.position.copy(CAMERA_POSITION);
+        camera.lookAt(0, 0, 0);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.enablePan = true;
+        controls.enableZoom = true;
+        controls.target.set(0, 0, 0);
+
+        const ambient = new THREE.AmbientLight(0xffffff, mode === 'current' ? 0.76 : 0.62);
+        const hemi = new THREE.HemisphereLight('#ffffff', '#c2cad6', mode === 'current' ? 1.2 : 0.82);
+        const key = new THREE.DirectionalLight(0xffffff, mode === 'current' ? 1.2 : 1.05);
+        key.position.set(...LIGHTS.key);
+        key.castShadow = true;
+        key.shadow.mapSize.set(2048, 2048);
+        key.shadow.bias = -0.0003;
+        const fill = new THREE.DirectionalLight(0xffffff, mode === 'current' ? 0.5 : 0.28);
+        fill.position.set(...LIGHTS.fill);
+        const spot = new THREE.SpotLight(0xffffff, mode === 'current' ? 6.6 : 4.2, 0, 0.42, 0.72);
+        spot.position.set(...LIGHTS.spot);
+        spot.castShadow = true;
+        scene.add(ambient, hemi, key, fill, spot);
+
+        const boxGroup = createBoxGroup(mode);
+        scene.add(boxGroup);
+
+        const floorY = -BOX_SIZE.height / 2 - 0.018;
+        scene.add(mode === 'current' ? createFakeWoodTable(floorY) : createRealWoodTable(floorY));
+        scene.add(createSoftShadow(floorY));
+
+        let currentTexture = null;
+
+        function setArtwork(url) {
+          const loader = new THREE.TextureLoader();
+          loader.load(url, (texture) => {
+            if (currentTexture) {
+              currentTexture.dispose();
+            }
+
+            currentTexture = texture;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 8;
+            texture.needsUpdate = true;
+
+            boxGroup.traverse((child) => {
+              if (child.userData.artworkFace && child.material) {
+                child.material.map = texture;
+                child.material.needsUpdate = true;
+              }
+            });
+            renderOnce();
+          });
+        }
+
+        function resize() {
+          const width = container.clientWidth;
+          const height = container.clientHeight;
+          renderer.setSize(width, height, false);
+          camera.aspect = width / Math.max(height, 1);
+          camera.updateProjectionMatrix();
+          renderOnce();
+        }
+
+        function renderOnce() {
+          controls.update();
+          renderer.render(scene, camera);
+        }
+
+        function animate() {
+          requestAnimationFrame(animate);
+          controls.update();
+          renderer.render(scene, camera);
+        }
+
+        const observer = new ResizeObserver(resize);
+        observer.observe(container);
+        resize();
+        animate();
+
+        return {
+          canvas: renderer.domElement,
+          setArtwork,
+        };
+      }
+
+      function createBoxGroup(mode) {
+        const group = new THREE.Group();
+        group.rotation.y = -0.08;
+
+        const base = new THREE.Mesh(
+          new THREE.BoxGeometry(BOX_SIZE.width, BOX_SIZE.height, BOX_SIZE.depth),
+          new THREE.MeshPhysicalMaterial({
+            color: '#f4f1ea',
+            roughness: 0.66,
+            clearcoat: 0.18,
+            clearcoatRoughness: 0.58,
+            envMapIntensity: 0.18,
+          }),
+        );
+        base.castShadow = true;
+        base.receiveShadow = true;
+        group.add(base);
+
+        const sideMaterial = new THREE.MeshStandardMaterial({
+          color: mode === 'current' ? '#d9d2c8' : '#eee9df',
+          roughness: 0.6,
+        });
+
+        const sideFaces = [
+          { size: [BOX_SIZE.depth, BOX_SIZE.height], position: [BOX_SIZE.width / 2 + 0.004, 0, 0], rotation: [0, Math.PI / 2, 0] },
+          { size: [BOX_SIZE.width, BOX_SIZE.depth], position: [0, BOX_SIZE.height / 2 + 0.004, 0], rotation: [-Math.PI / 2, 0, 0] },
+        ];
+
+        sideFaces.forEach((face) => {
+          const mesh = new THREE.Mesh(new THREE.PlaneGeometry(...face.size), sideMaterial);
+          mesh.position.set(...face.position);
+          mesh.rotation.set(...face.rotation);
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          group.add(mesh);
+        });
+
+        const artworkMaterial =
+          mode === 'current'
+            ? new THREE.MeshStandardMaterial({
+                color: '#ffffff',
+                roughness: 0.48,
+                metalness: 0,
+                side: THREE.DoubleSide,
+              })
+            : new THREE.MeshBasicMaterial({
+                color: '#ffffff',
+                side: THREE.DoubleSide,
+                toneMapped: false,
+              });
+
+        const artwork = new THREE.Mesh(new THREE.PlaneGeometry(BOX_SIZE.width, BOX_SIZE.height), artworkMaterial);
+        artwork.position.set(0, 0, BOX_SIZE.depth / 2 + 0.006);
+        artwork.castShadow = true;
+        artwork.receiveShadow = true;
+        artwork.userData.artworkFace = true;
+        group.add(artwork);
+
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: mode === 'current' ? '#cfc5b7' : '#d7cec1' });
+        const edgeLines = new THREE.LineSegments(new THREE.EdgesGeometry(base.geometry, 15), edgeMaterial);
+        group.add(edgeLines);
+
+        return group;
+      }
+
+      function createFakeWoodTable(floorY) {
+        const texture = createFakeWoodTexture();
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(2.9, 0.09, 2.5),
+          new THREE.MeshStandardMaterial({
+            map: texture,
+            roughness: 0.66,
+            metalness: 0.02,
+          }),
+        );
+        mesh.position.set(0, floorY - 0.045, 0);
+        mesh.receiveShadow = true;
+        return mesh;
+      }
+
+      function createRealWoodTable(floorY) {
+        const loader = new THREE.TextureLoader();
+        const configureTexture = (texture, colorSpace) => {
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.wrapT = THREE.RepeatWrapping;
+          texture.repeat.set(1.9, 1.45);
+          texture.anisotropy = 8;
+          if (colorSpace) {
+            texture.colorSpace = colorSpace;
+          }
+        };
+        const loadWoodTexture = (url, colorSpace) => {
+          const texture = loader.load(url, () => {
+            texture.needsUpdate = true;
+          });
+          configureTexture(texture, colorSpace);
+          return texture;
+        };
+        const diffuse = loadWoodTexture('/preview-assets/hardwood2_diffuse.jpg', THREE.SRGBColorSpace);
+        const bump = loadWoodTexture('/preview-assets/hardwood2_bump.jpg');
+        const roughness = loadWoodTexture('/preview-assets/hardwood2_roughness.jpg');
+
+        const mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(2.9, 0.09, 2.5, 1, 1, 1),
+          new THREE.MeshStandardMaterial({
+            map: diffuse,
+            bumpMap: bump,
+            bumpScale: 0.018,
+            roughnessMap: roughness,
+            roughness: 0.58,
+            metalness: 0,
+          }),
+        );
+        mesh.position.set(0, floorY - 0.045, 0);
+        mesh.receiveShadow = true;
+        return mesh;
+      }
+
+      function createSoftShadow(floorY) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        const gradient = context.createRadialGradient(256, 256, 20, 256, 256, 238);
+        gradient.addColorStop(0, 'rgba(20, 24, 31, 0.2)');
+        gradient.addColorStop(0.45, 'rgba(20, 24, 31, 0.1)');
+        gradient.addColorStop(1, 'rgba(20, 24, 31, 0)');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, 512, 512);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const mesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(1, 1),
+          new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0.72,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+          }),
+        );
+        mesh.position.set(0, floorY + 0.003, 0);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.scale.set(1.98, 1.68, 1);
+        return mesh;
+      }
+
+      function createFakeWoodTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 512;
+        const context = canvas.getContext('2d');
+        const palette = { base: '#966035', grain: '#5f351d', highlight: '#bd8555', line: '#4e2c18' };
+        context.fillStyle = palette.base;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let x = 0; x < canvas.width; x += 256) {
+          context.fillStyle = x % 512 === 0 ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.04)';
+          context.fillRect(x, 0, 256, canvas.height);
+          context.strokeStyle = palette.line;
+          context.lineWidth = 5;
+          context.beginPath();
+          context.moveTo(x, 0);
+          context.lineTo(x, canvas.height);
+          context.stroke();
+        }
+
+        for (let y = 18; y < canvas.height; y += 13) {
+          context.beginPath();
+          context.moveTo(0, y);
+          for (let x = 0; x <= canvas.width; x += 24) {
+            const wobble = Math.sin((x + y * 2.2) * 0.016) * 6 + Math.sin((x - y) * 0.041) * 2.5;
+            context.lineTo(x, y + wobble);
+          }
+          context.strokeStyle = y % 39 === 0 ? palette.highlight : palette.grain;
+          context.globalAlpha = y % 39 === 0 ? 0.24 : 0.34;
+          context.lineWidth = y % 26 === 0 ? 2.2 : 1.1;
+          context.stroke();
+        }
+
+        context.globalAlpha = 1;
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1.7, 1.4);
+        texture.anisotropy = 8;
+        return texture;
+      }
+
+      function createSampleArtworkUrl() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 1800;
+        const context = canvas.getContext('2d');
+
+        context.fillStyle = '#f8fafc';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        const bands = [
+          ['#00aeef', 0],
+          ['#ec008c', 300],
+          ['#fff200', 600],
+          ['#111827', 900],
+        ];
+        bands.forEach(([color, x]) => {
+          context.fillStyle = color;
+          context.fillRect(x, 0, 300, canvas.height);
+        });
+
+        context.fillStyle = 'rgba(255,255,255,0.88)';
+        context.fillRect(120, 180, 960, 420);
+        context.fillStyle = '#111827';
+        context.font = '800 126px system-ui, sans-serif';
+        context.fillText('BoxLens', 190, 380);
+        context.font = '600 48px system-ui, sans-serif';
+        context.fillText('RGB proof preview sample', 195, 480);
+
+        context.strokeStyle = '#111827';
+        context.lineWidth = 18;
+        context.strokeRect(90, 90, 1020, 1620);
+
+        return canvas.toDataURL('image/png');
+      }
+
+      function downloadComparison() {
+        const width = 1800;
+        const height = 1080;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+
+        context.fillStyle = '#eef2f5';
+        context.fillRect(0, 0, width, height);
+        context.fillStyle = '#18202a';
+        context.font = '700 32px system-ui, sans-serif';
+        context.fillText('BoxLens 3D color / wood comparison', 40, 58);
+
+        drawPanel(context, currentPreview.canvas, 40, 90, 830, 930, 'Current render');
+        drawPanel(context, proofPreview.canvas, 930, 90, 830, 930, 'RGB proof + real wood');
+
+        const link = document.createElement('a');
+        link.download = `boxlens-compare-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+
+      function drawPanel(context, sourceCanvas, x, y, width, height, label) {
+        context.fillStyle = '#ffffff';
+        context.fillRect(x, y, width, height);
+        context.strokeStyle = '#cfd7e2';
+        context.lineWidth = 2;
+        context.strokeRect(x, y, width, height);
+        context.fillStyle = '#18202a';
+        context.font = '700 24px system-ui, sans-serif';
+        context.fillText(label, x + 22, y + 42);
+        context.drawImage(sourceCanvas, x + 20, y + 64, width - 40, height - 84);
+      }
+    </script>
+  </body>
+</html>

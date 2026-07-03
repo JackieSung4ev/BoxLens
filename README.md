@@ -4,15 +4,17 @@ BoxLens is a frontend-only, real-time 3D packaging mockup tool for rectangular p
 
 ## Features
 
-- Live 3D box preview with editable width, height, and depth in millimeters.
+- Live 3D box preview with editable width, height, depth, and corner radius in millimeters.
 - Drag-and-drop artwork upload for each face, with folder/file auto-matching for side names such as front, back, left, right, top, and bottom.
 - Per-face appearance modes: artwork or solid color.
-- Solid color editing in RGB or CMYK inputs. The browser preview and exported PNG are RGB; CMYK values are converted to the closest RGB preview color.
+- Solid color editing in RGB or CMYK inputs, with an RGB proof preview toggle to reduce artwork color shifts in the 3D view.
+- Hot foil preview per face, using automatic gold detection, uploaded mask images, or both.
 - Side artwork rotation control, defaulting to no rotation for pre-rotated designs.
 - Lighting controls for preset, intensity, direction, optional environment lighting, and environment intensity.
 - Shadows are off by default, with an optional shadow toggle.
-- Optional wood floor or wood table surface under the package.
+- Optional texture-based wood floor or wood table surface under the package.
 - English and Chinese UI with automatic browser-language detection plus manual switching.
+- Fullscreen preview button in the 3D canvas.
 - PNG export of the current WebGL view.
 
 ## Getting Started

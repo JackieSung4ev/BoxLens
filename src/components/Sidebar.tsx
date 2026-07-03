@@ -9,6 +9,8 @@ import type {
   BoxDimensions,
   FaceAppearance,
   FaceAppearanceMap,
+  FinishSettingsMap,
+  FoilSettings,
   LightDirection,
   LightingPreset,
   RenderSettings,
@@ -29,12 +31,16 @@ interface SidebarProps {
   dimensions: BoxDimensions;
   exportDisabled: boolean;
   faceAppearance: FaceAppearanceMap;
+  finishSettings: FinishSettingsMap;
   locale: Locale;
   onFaceAppearanceChange: (side: ArtworkSide, appearance: Partial<FaceAppearance>) => void;
   onArtworkRemove: (side: ArtworkSide) => void;
   onArtworkUpload: (side: ArtworkSide, file: File) => void;
   onDimensionChange: (key: keyof BoxDimensions, value: number) => void;
   onExport: () => void;
+  onFinishSettingsChange: (side: ArtworkSide, finish: Partial<FoilSettings>) => void;
+  onFoilMaskRemove: (side: ArtworkSide) => void;
+  onFoilMaskUpload: (side: ArtworkSide, file: File) => void;
   onLocaleChange: (locale: Locale) => void;
   onResetCamera: () => void;
   onSettingsChange: (settings: RenderSettings) => void;
@@ -47,12 +53,16 @@ export function Sidebar({
   dimensions,
   exportDisabled,
   faceAppearance,
+  finishSettings,
   locale,
   onFaceAppearanceChange,
   onArtworkRemove,
   onArtworkUpload,
   onDimensionChange,
   onExport,
+  onFinishSettingsChange,
+  onFoilMaskRemove,
+  onFoilMaskUpload,
   onLocaleChange,
   onResetCamera,
   onSettingsChange,
@@ -79,7 +89,11 @@ export function Sidebar({
           artwork={artwork}
           copy={copy}
           faceAppearance={faceAppearance}
+          finishSettings={finishSettings}
           onAppearanceChange={onFaceAppearanceChange}
+          onFinishChange={onFinishSettingsChange}
+          onFoilMaskRemove={onFoilMaskRemove}
+          onFoilMaskUpload={onFoilMaskUpload}
           onRemove={onArtworkRemove}
           onUpload={onArtworkUpload}
         />
@@ -133,6 +147,33 @@ export function Sidebar({
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-ink-100 px-3 py-2 text-sm font-medium text-ink-900">
+              {copy.rgbProof}
+              <input
+                checked={settings.rgbProof}
+                className="h-5 w-5 accent-lens-600"
+                onChange={(event) => onSettingsChange({ ...settings, rgbProof: event.target.checked })}
+                type="checkbox"
+              />
+            </label>
+
+            <label className="block rounded-lg border border-ink-100 px-3 py-2">
+              <span className="flex items-center justify-between gap-3 text-sm font-medium text-ink-900">
+                {copy.cornerRadius}
+                <span className="tabular-nums text-xs text-ink-500">{settings.cornerRadiusMm.toFixed(0)} mm</span>
+              </span>
+              <input
+                aria-label={copy.cornerRadius}
+                className="mt-2 w-full accent-lens-600"
+                max={30}
+                min={0}
+                onChange={(event) => onSettingsChange({ ...settings, cornerRadiusMm: event.target.valueAsNumber })}
+                step={1}
+                type="range"
+                value={settings.cornerRadiusMm}
+              />
             </label>
 
             <label className="flex min-h-11 items-center justify-between gap-4 rounded-lg border border-ink-100 px-3 py-2 text-sm font-medium text-ink-900">

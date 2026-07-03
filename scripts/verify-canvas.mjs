@@ -148,7 +148,7 @@ async function verifyViewport(browser, viewport) {
     );
   }
 
-  const exportButton = page.getByRole('button', { name: /export png/i });
+  const exportButton = page.getByRole('button', { name: /export png|导出 png/i });
   if (await exportButton.isDisabled()) {
     throw new Error(`${viewport.name} export button stayed disabled after canvas initialization`);
   }

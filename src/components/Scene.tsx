@@ -1,6 +1,7 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { Environment, OrbitControls } from '@react-three/drei';
+import { Environment, OrbitControls, useTexture } from '@react-three/drei';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import {
   ACESFilmicToneMapping,
   CanvasTexture,
@@ -8,6 +9,7 @@ import {
   PCFSoftShadowMap,
   RepeatWrapping,
   SRGBColorSpace,
+  type Texture,
   Vector3,
 } from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -17,6 +19,7 @@ import type {
   ArtworkMap,
   BoxDimensions,
   FaceAppearanceMap,
+  FinishSettingsMap,
   LightDirection,
   LightingPreset,
   RenderSettings,
@@ -27,6 +30,7 @@ interface SceneProps {
   artwork: ArtworkMap;
   dimensions: BoxDimensions;
   faceAppearance: FaceAppearanceMap;
+  finishSettings: FinishSettingsMap;
   onCanvasReady: (canvas: HTMLCanvasElement | null) => void;
   resetToken: number;
   settings: RenderSettings;
@@ -104,15 +108,52 @@ const LIGHT_DIRECTIONS: Record<
   },
 };
 
-export function Scene({ artwork, dimensions, faceAppearance, onCanvasReady, resetToken, settings }: SceneProps) {
+export function Scene({
+  artwork,
+  dimensions,
+  faceAppearance,
+  finishSettings,
+  onCanvasReady,
+  resetToken,
+  settings,
+}: SceneProps) {
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const normalizedSize = normalizeDimensions(dimensions);
   const floorY = -normalizedSize.height / 2 - 0.018;
   const lighting = LIGHTING_PRESETS[settings.lightingPreset];
   const direction = LIGHT_DIRECTIONS[settings.lightDirection];
   const lightScale = settings.lightIntensity;
+  const toggleFullscreen = useCallback(() => {
+    const element = previewRef.current;
+    if (!element) {
+      return;
+    }
+
+    if (document.fullscreenElement === element) {
+      void document.exitFullscreen();
+      return;
+    }
+
+    void element.requestFullscreen();
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === previewRef.current);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   return (
-    <div className="relative h-[68vh] min-h-[520px] overflow-hidden rounded-lg border border-white/80 bg-white shadow-panel lg:h-full lg:min-h-0">
+    <div
+      className={`relative overflow-hidden border border-white/80 bg-white shadow-panel ${
+        isFullscreen ? 'h-dvh min-h-dvh rounded-none' : 'h-[68vh] min-h-[520px] rounded-lg lg:h-full lg:min-h-0'
+      }`}
+      ref={previewRef}
+    >
       <Canvas
         camera={{ fov: 34, position: CAMERA_POSITION.toArray(), near: 0.1, far: 100 }}
         dpr={[1, 2]}
@@ -145,14 +186,31 @@ export function Scene({ artwork, dimensions, faceAppearance, onCanvasReady, rese
             <Environment background={false} environmentIntensity={settings.environmentIntensity} preset="studio" />
           ) : null}
         </Suspense>
-        <BoxMockup artwork={artwork} dimensions={dimensions} faceAppearance={faceAppearance} settings={settings} />
-        <WoodSurface floorY={floorY} preset={settings.surface} size={normalizedSize} />
+        <BoxMockup
+          artwork={artwork}
+          dimensions={dimensions}
+          faceAppearance={faceAppearance}
+          finishSettings={finishSettings}
+          settings={settings}
+        />
+        <Suspense fallback={null}>
+          <WoodSurface floorY={floorY} preset={settings.surface} size={normalizedSize} />
+        </Suspense>
         {settings.shadows ? <SoftGroundShadow floorY={floorY} size={normalizedSize} /> : null}
         <StudioCameraControls resetToken={resetToken} />
       </Canvas>
       <div className="pointer-events-none absolute left-4 top-4 rounded-lg border border-white/70 bg-white/85 px-3 py-2 text-xs font-medium text-ink-700 shadow-control backdrop-blur">
         {Math.max(1, dimensions.width)} x {Math.max(1, dimensions.height)} x {Math.max(1, dimensions.depth)} mm
       </div>
+      <button
+        aria-label={isFullscreen ? 'Exit fullscreen preview' : 'Enter fullscreen preview'}
+        className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/70 bg-white/85 text-ink-700 shadow-control backdrop-blur transition hover:bg-white hover:text-ink-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
+        onClick={toggleFullscreen}
+        title={isFullscreen ? 'Exit fullscreen preview' : 'Enter fullscreen preview'}
+        type="button"
+      >
+        {isFullscreen ? <Minimize2 aria-hidden="true" size={18} /> : <Maximize2 aria-hidden="true" size={18} />}
+      </button>
     </div>
   );
 }
@@ -166,13 +224,29 @@ function WoodSurface({
   preset: SurfacePreset;
   size: { width: number; height: number; depth: number };
 }) {
-  const texture = useMemo(() => (preset === 'none' ? null : createWoodTexture(preset)), [preset]);
+  const textures = useTexture({
+    bumpMap: '/textures/hardwood2_bump.jpg',
+    map: '/textures/hardwood2_diffuse.jpg',
+    roughnessMap: '/textures/hardwood2_roughness.jpg',
+  }) as Record<'bumpMap' | 'map' | 'roughnessMap', Texture>;
 
   useEffect(() => {
-    return () => texture?.dispose();
-  }, [texture]);
+    const repeat = preset === 'woodFloor' ? [4.2, 4.2] : [2.15, 1.65];
 
-  if (!texture || preset === 'none') {
+    Object.entries(textures).forEach(([key, texture]) => {
+      texture.wrapS = RepeatWrapping;
+      texture.wrapT = RepeatWrapping;
+      texture.repeat.set(repeat[0], repeat[1]);
+      texture.anisotropy = Math.max(texture.anisotropy, 8);
+      texture.needsUpdate = true;
+
+      if (key === 'map') {
+        texture.colorSpace = SRGBColorSpace;
+      }
+    });
+  }, [preset, textures]);
+
+  if (preset === 'none') {
     return null;
   }
 
@@ -184,7 +258,14 @@ function WoodSurface({
     return (
       <mesh position={[0, floorY - thickness / 2, 0]} receiveShadow>
         <boxGeometry args={[tableWidth, thickness, tableDepth]} />
-        <meshStandardMaterial map={texture} metalness={0.02} roughness={0.66} />
+        <meshStandardMaterial
+          bumpMap={textures.bumpMap}
+          bumpScale={0.012}
+          map={textures.map}
+          metalness={0.02}
+          roughness={0.66}
+          roughnessMap={textures.roughnessMap}
+        />
       </mesh>
     );
   }
@@ -192,74 +273,16 @@ function WoodSurface({
   return (
     <mesh position={[0, floorY, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[8, 8]} />
-      <meshStandardMaterial map={texture} metalness={0.01} roughness={0.72} />
+      <meshStandardMaterial
+        bumpMap={textures.bumpMap}
+        bumpScale={0.018}
+        map={textures.map}
+        metalness={0.01}
+        roughness={0.72}
+        roughnessMap={textures.roughnessMap}
+      />
     </mesh>
   );
-}
-
-function createWoodTexture(preset: Exclude<SurfacePreset, 'none'>): CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 512;
-  const context = canvas.getContext('2d');
-
-  if (context) {
-    const palette =
-      preset === 'woodFloor'
-        ? { base: '#b87946', grain: '#754523', highlight: '#d7a36e', seam: '#68401f' }
-        : { base: '#966035', grain: '#5f351d', highlight: '#bd8555', seam: '#4e2c18' };
-
-    context.fillStyle = palette.base;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    const plankWidth = preset === 'woodFloor' ? 168 : 256;
-    for (let x = 0; x < canvas.width; x += plankWidth) {
-      context.fillStyle = x % (plankWidth * 2) === 0 ? 'rgba(255, 255, 255, 0.045)' : 'rgba(0, 0, 0, 0.04)';
-      context.fillRect(x, 0, plankWidth, canvas.height);
-      context.strokeStyle = palette.seam;
-      context.lineWidth = 5;
-      context.beginPath();
-      context.moveTo(x, 0);
-      context.lineTo(x, canvas.height);
-      context.stroke();
-    }
-
-    for (let y = 18; y < canvas.height; y += 13) {
-      context.beginPath();
-      context.moveTo(0, y);
-
-      for (let x = 0; x <= canvas.width; x += 24) {
-        const wobble = Math.sin((x + y * 2.2) * 0.016) * 6 + Math.sin((x - y) * 0.041) * 2.5;
-        context.lineTo(x, y + wobble);
-      }
-
-      context.strokeStyle = y % 39 === 0 ? palette.highlight : palette.grain;
-      context.globalAlpha = y % 39 === 0 ? 0.24 : 0.34;
-      context.lineWidth = y % 26 === 0 ? 2.2 : 1.1;
-      context.stroke();
-    }
-
-    context.globalAlpha = 0.18;
-    for (let i = 0; i < 18; i += 1) {
-      const x = (i * 137) % canvas.width;
-      const y = (i * 71) % canvas.height;
-      context.beginPath();
-      context.ellipse(x, y, 42, 10, (i % 6) * 0.35, 0, Math.PI * 2);
-      context.strokeStyle = palette.grain;
-      context.lineWidth = 2;
-      context.stroke();
-    }
-    context.globalAlpha = 1;
-  }
-
-  const texture = new CanvasTexture(canvas);
-  texture.colorSpace = SRGBColorSpace;
-  texture.wrapS = RepeatWrapping;
-  texture.wrapT = RepeatWrapping;
-  texture.repeat.set(preset === 'woodFloor' ? 3.5 : 1.7, preset === 'woodFloor' ? 3.5 : 1.4);
-  texture.anisotropy = 8;
-  texture.needsUpdate = true;
-  return texture;
 }
 
 function SoftGroundShadow({

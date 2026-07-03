@@ -223,7 +223,7 @@ function ArtworkSlot({
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
     >
-      <div className="grid grid-cols-[88px_minmax(0,1fr)] items-end gap-4">
+      <div className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-4">
         <div
           className={`flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border bg-white text-center ${
             asset || appearance.mode === 'solid' ? 'border-ink-200' : 'border-dashed border-lens-100'

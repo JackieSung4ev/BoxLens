@@ -54,7 +54,7 @@ describe('App', () => {
     expect(screen.getAllByText('Drop artwork')).toHaveLength(6);
     expect(container.innerHTML).not.toContain('bg-gradient-to-br');
     expect(container.innerHTML).not.toContain('shadow-[0_8px_28px');
-    expect(container.innerHTML).toContain('grid-cols-[88px_minmax(0,1fr)] items-end');
+    expect(container.innerHTML).toContain('grid-cols-[88px_minmax(0,1fr)] items-start');
     expect(screen.getByLabelText('Environment lighting')).not.toBeChecked();
     expect(screen.getByLabelText('Shadows')).not.toBeChecked();
     expect(screen.getByLabelText('RGB proof preview')).toBeChecked();

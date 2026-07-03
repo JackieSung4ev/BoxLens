@@ -67,6 +67,9 @@ describe('App', () => {
     expect(screen.getByLabelText('RGB proof preview')).toBeChecked();
     expect(screen.getByLabelText('Camera lens length in mm')).toHaveValue('110');
     expect(screen.getByLabelText('Corner radius in mm')).toHaveValue('3');
+    expect(screen.getByLabelText('Corner radius in mm')).toHaveAttribute('max', '10');
+    expect(screen.getByLabelText('Corner radius in mm')).toHaveAttribute('step', '0.1');
+    expect(screen.getAllByRole('button', { name: /^Use background / })).toHaveLength(8);
     expect(screen.getByLabelText('Surface')).toHaveValue('none');
     expect(screen.queryByRole('option', { name: 'Wood table' })).not.toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Marble' })).toBeInTheDocument();
@@ -227,11 +230,11 @@ describe('App', () => {
 
     fireEvent.click(screen.getByLabelText('RGB proof preview'));
     fireEvent.change(screen.getByLabelText('Camera lens length in mm'), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText('Corner radius in mm'), { target: { value: '8' } });
+    fireEvent.change(screen.getByLabelText('Corner radius in mm'), { target: { value: '4.5' } });
 
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-rgb-proof', 'off');
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-camera-length', '70');
-    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '8');
+    expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-corner-radius', '4.5');
   });
 
   it('restores rendering controls to their defaults without clearing dimensions or artwork', async () => {

@@ -8,6 +8,12 @@ describe('corner radius render settings', () => {
     expect(clamped).toBe(10);
   });
 
+  it('caps corner radius at 10mm for packaging previews', () => {
+    const clamped = clampCornerRadiusMm(16, { width: 120, height: 180, depth: 60 });
+
+    expect(clamped).toBe(10);
+  });
+
   it('treats invalid corner radius values as square corners', () => {
     expect(clampCornerRadiusMm(Number.NaN, { width: 120, height: 180, depth: 60 })).toBe(0);
     expect(clampCornerRadiusMm(-4, { width: 120, height: 180, depth: 60 })).toBe(0);

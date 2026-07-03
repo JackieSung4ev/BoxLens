@@ -3,6 +3,7 @@ import { ArtworkUploader } from './ArtworkUploader';
 import { DimensionControls } from './DimensionControls';
 import { ExportButton } from './ExportButton';
 import { formatMessage, LOCALE_OPTIONS, type Locale, type Translation } from '../lib/i18n';
+import { clampCornerRadiusMm, MAX_CORNER_RADIUS_MM } from '../lib/renderSettings';
 import type {
   ArtworkMap,
   ArtworkSide,
@@ -18,7 +19,7 @@ import type {
   SurfacePreset,
 } from '../types';
 
-const BACKGROUND_PRESETS = ['#f7f9fb', '#f3efe8', '#e8eef7', '#18202a'];
+const BACKGROUND_PRESETS = ['#f7f9fb', '#ffffff', '#f3efe8', '#e8eef7', '#e9f5ef', '#f6e9ef', '#f5f0d7', '#18202a'];
 
 const SIDE_ROTATION_OPTIONS: SideArtworkRotation[] = ['none', 'rotate90', 'rotateMinus90', 'rotate180'];
 const LIGHTING_PRESET_OPTIONS: LightingPreset[] = ['softbox', 'studio', 'crisp', 'dramatic'];
@@ -113,7 +114,7 @@ export function Sidebar({
               <label htmlFor="background-color" className="text-sm font-medium text-ink-900">
                 {copy.backgroundColor}
               </label>
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {BACKGROUND_PRESETS.map((color) => (
                   <button
                     aria-label={formatMessage(copy.useBackground, { color })}
@@ -181,15 +182,20 @@ export function Sidebar({
             <label className="block rounded-lg border border-ink-100 px-3 py-2">
               <span className="flex items-center justify-between gap-3 text-sm font-medium text-ink-900">
                 {copy.cornerRadius}
-                <span className="tabular-nums text-xs text-ink-500">{settings.cornerRadiusMm.toFixed(0)} mm</span>
+                <span className="tabular-nums text-xs text-ink-500">{settings.cornerRadiusMm.toFixed(1)} mm</span>
               </span>
               <input
                 aria-label={copy.cornerRadius}
                 className="mt-2 w-full accent-lens-600"
-                max={30}
+                max={MAX_CORNER_RADIUS_MM}
                 min={0}
-                onChange={(event) => onSettingsChange({ ...settings, cornerRadiusMm: event.target.valueAsNumber })}
-                step={1}
+                onChange={(event) =>
+                  onSettingsChange({
+                    ...settings,
+                    cornerRadiusMm: clampCornerRadiusMm(event.target.valueAsNumber, dimensions),
+                  })
+                }
+                step={0.1}
                 type="range"
                 value={settings.cornerRadiusMm}
               />

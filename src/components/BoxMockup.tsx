@@ -1,10 +1,10 @@
 import { Suspense, useEffect, useMemo } from 'react';
-import { Edges, RoundedBox, useTexture } from '@react-three/drei';
-import { CanvasTexture, DoubleSide, ShapeGeometry, type Texture } from 'three';
+import { Edges, useTexture } from '@react-three/drei';
+import { CanvasTexture, DoubleSide, PlaneGeometry, type Texture } from 'three';
+import { createEdgeBeveledBoxGeometry } from '../lib/beveledBoxGeometry';
 import { ARTWORK_SIDES, getFacePlacement, normalizeDimensions } from '../lib/boxGeometry';
 import { createAutoFoilMaskCanvas } from '../lib/foilDetection';
 import { cornerRadiusMmToSceneUnits } from '../lib/renderSettings';
-import { clampFaceCornerRadius, createRoundedFaceShape } from '../lib/roundedFace';
 import { applyArtworkTextureSettings } from '../lib/textureUtils';
 import type {
   ArtworkAsset,
@@ -38,37 +38,20 @@ const SIDE_TINTS: Record<ArtworkSide, string> = {
 
 export function BoxMockup({ artwork, dimensions, faceAppearance, finishSettings, settings }: BoxMockupProps) {
   const size = useMemo(() => normalizeDimensions(dimensions), [dimensions]);
-  const cornerRadius = useMemo(
+  const edgeBevel = useMemo(
     () => cornerRadiusMmToSceneUnits(settings.cornerRadiusMm, dimensions),
     [dimensions, settings.cornerRadiusMm],
   );
 
   return (
     <group rotation={[0, -0.08, 0]}>
-      <RoundedBox
-        args={[size.width, size.height, size.depth]}
-        castShadow
-        receiveShadow
-        radius={Math.max(0.001, cornerRadius)}
-        smoothness={8}
-      >
-        <meshPhysicalMaterial
-          clearcoat={0.18}
-          clearcoatRoughness={0.58}
-          color="#f4f1ea"
-          envMapIntensity={0.18}
-          metalness={0}
-          roughness={0.66}
-        />
-        <Edges color="#cfc5b7" threshold={15} />
-      </RoundedBox>
+      <EdgeBeveledBox bevelSegments={settings.bevelSegments} edgeBevel={edgeBevel} size={size} />
 
       {ARTWORK_SIDES.map((side) => {
-        const placement = getFacePlacement(side, size);
+        const placement = getFacePlacement(side, size, edgeBevel);
         const asset = artwork[side];
         const appearance = faceAppearance[side];
         const finish = finishSettings[side];
-        const faceRadius = clampFaceCornerRadius(placement.planeSize[0], placement.planeSize[1], cornerRadius);
 
         return appearance.mode === 'solid' ? (
           <SolidColorFace
@@ -76,26 +59,57 @@ export function BoxMockup({ artwork, dimensions, faceAppearance, finishSettings,
             finish={finish}
             key={side}
             placement={placement}
-            radius={faceRadius}
             rgbProof={settings.rgbProof}
           />
         ) : asset ? (
-          <Suspense fallback={<PlaceholderFace placement={placement} radius={faceRadius} side={side} />} key={side}>
+          <Suspense fallback={<PlaceholderFace placement={placement} side={side} />} key={side}>
             <ArtworkFace
               asset={asset}
               finish={finish}
               placement={placement}
-              radius={faceRadius}
               rgbProof={settings.rgbProof}
               rotation={getSideTextureRotation(side, settings.sideArtworkRotation)}
               side={side}
             />
           </Suspense>
         ) : (
-          <PlaceholderFace key={side} placement={placement} radius={faceRadius} side={side} />
+          <PlaceholderFace key={side} placement={placement} side={side} />
         );
       })}
     </group>
+  );
+}
+
+function EdgeBeveledBox({
+  bevelSegments,
+  edgeBevel,
+  size,
+}: {
+  bevelSegments: number;
+  edgeBevel: number;
+  size: { width: number; height: number; depth: number };
+}) {
+  const geometry = useMemo(
+    () => createEdgeBeveledBoxGeometry(size.width, size.height, size.depth, edgeBevel, bevelSegments),
+    [bevelSegments, edgeBevel, size.depth, size.height, size.width],
+  );
+
+  useEffect(() => {
+    return () => geometry.dispose();
+  }, [geometry]);
+
+  return (
+    <mesh castShadow receiveShadow geometry={geometry}>
+      <meshPhysicalMaterial
+        clearcoat={0.18}
+        clearcoatRoughness={0.58}
+        color="#f4f1ea"
+        envMapIntensity={0.18}
+        metalness={0}
+        roughness={0.66}
+      />
+      <Edges color="#cfc5b7" threshold={24} />
+    </mesh>
   );
 }
 
@@ -103,26 +117,24 @@ function SolidColorFace({
   color,
   finish,
   placement,
-  radius,
   rgbProof,
 }: {
   color: string;
   finish: FoilSettings;
   placement: FacePlacement;
-  radius: number;
   rgbProof: boolean;
 }) {
   return (
     <group position={placement.position} rotation={placement.rotation}>
       <mesh castShadow receiveShadow>
-        <RoundedFaceGeometry planeSize={placement.planeSize} radius={radius} />
+        <FacePanelGeometry planeSize={placement.planeSize} />
         {rgbProof ? (
           <meshBasicMaterial color={color} side={DoubleSide} toneMapped={false} />
         ) : (
           <meshStandardMaterial color={color} metalness={0} roughness={0.58} side={DoubleSide} toneMapped={false} />
         )}
       </mesh>
-      <FoilOverlay finish={finish} placement={placement} radius={radius} />
+      <FoilOverlay finish={finish} placement={placement} />
     </group>
   );
 }
@@ -131,7 +143,6 @@ function ArtworkFace({
   asset,
   finish,
   placement,
-  radius,
   rgbProof,
   rotation,
   side,
@@ -139,7 +150,6 @@ function ArtworkFace({
   asset: ArtworkAsset;
   finish: FoilSettings;
   placement: FacePlacement;
-  radius: number;
   rgbProof: boolean;
   rotation: number;
   side: ArtworkSide;
@@ -159,7 +169,7 @@ function ArtworkFace({
   return (
     <group position={placement.position} rotation={placement.rotation}>
       <mesh castShadow receiveShadow>
-        <RoundedFaceGeometry planeSize={placement.planeSize} radius={radius} />
+        <FacePanelGeometry planeSize={placement.planeSize} />
         {rgbProof ? (
           <meshBasicMaterial map={texture} side={DoubleSide} toneMapped={false} transparent={false} />
         ) : (
@@ -175,11 +185,11 @@ function ArtworkFace({
       </mesh>
       {rgbProof ? null : (
         <mesh position={[0, 0, -0.002]}>
-          <RoundedFaceGeometry planeSize={placement.planeSize} radius={radius} />
+          <FacePanelGeometry planeSize={placement.planeSize} />
           <meshBasicMaterial color={SIDE_TINTS[side]} opacity={0.03} side={DoubleSide} transparent />
         </mesh>
       )}
-      <FoilOverlay artworkTexture={texture} finish={finish} placement={placement} radius={radius} rotation={rotation} />
+      <FoilOverlay artworkTexture={texture} finish={finish} placement={placement} rotation={rotation} />
     </group>
   );
 }
@@ -188,13 +198,11 @@ function FoilOverlay({
   artworkTexture,
   finish,
   placement,
-  radius,
   rotation = 0,
 }: {
   artworkTexture?: Texture;
   finish: FoilSettings;
   placement: FacePlacement;
-  radius: number;
   rotation?: number;
 }) {
   const wantsAuto = finish.mode === 'auto' || finish.mode === 'autoMask';
@@ -212,7 +220,6 @@ function FoilOverlay({
           finish={finish}
           mask={finish.mask}
           placement={placement}
-          radius={radius}
           rotation={rotation}
         />
       </Suspense>
@@ -222,13 +229,13 @@ function FoilOverlay({
   if (wantsMask && finish.mask) {
     return (
       <Suspense fallback={null}>
-        <ManualFoilOverlay finish={finish} mask={finish.mask} placement={placement} radius={radius} rotation={rotation} />
+        <ManualFoilOverlay finish={finish} mask={finish.mask} placement={placement} rotation={rotation} />
       </Suspense>
     );
   }
 
   if (wantsAuto && artworkTexture) {
-    return <AutoFoilOverlay artworkTexture={artworkTexture} finish={finish} placement={placement} radius={radius} rotation={rotation} />;
+    return <AutoFoilOverlay artworkTexture={artworkTexture} finish={finish} placement={placement} rotation={rotation} />;
   }
 
   return null;
@@ -238,13 +245,11 @@ function AutoFoilOverlay({
   artworkTexture,
   finish,
   placement,
-  radius,
   rotation,
 }: {
   artworkTexture: Texture;
   finish: FoilSettings;
   placement: FacePlacement;
-  radius: number;
   rotation: number;
 }) {
   const alphaMap = useMemo(() => {
@@ -267,20 +272,18 @@ function AutoFoilOverlay({
     return null;
   }
 
-  return <FoilMesh alphaMap={alphaMap} finish={finish} placement={placement} radius={radius} />;
+  return <FoilMesh alphaMap={alphaMap} finish={finish} placement={placement} />;
 }
 
 function ManualFoilOverlay({
   finish,
   mask,
   placement,
-  radius,
   rotation,
 }: {
   finish: FoilSettings;
   mask: ArtworkAsset;
   placement: FacePlacement;
-  radius: number;
   rotation: number;
 }) {
   const maskTexture = useTexture(mask.url) as Texture;
@@ -307,7 +310,7 @@ function ManualFoilOverlay({
     return null;
   }
 
-  return <FoilMesh alphaMap={alphaMap} finish={finish} placement={placement} radius={radius} />;
+  return <FoilMesh alphaMap={alphaMap} finish={finish} placement={placement} />;
 }
 
 function CombinedFoilOverlay({
@@ -315,14 +318,12 @@ function CombinedFoilOverlay({
   finish,
   mask,
   placement,
-  radius,
   rotation,
 }: {
   artworkTexture: Texture;
   finish: FoilSettings;
   mask: ArtworkAsset;
   placement: FacePlacement;
-  radius: number;
   rotation: number;
 }) {
   const maskTexture = useTexture(mask.url) as Texture;
@@ -350,23 +351,21 @@ function CombinedFoilOverlay({
     return null;
   }
 
-  return <FoilMesh alphaMap={alphaMap} finish={finish} placement={placement} radius={radius} />;
+  return <FoilMesh alphaMap={alphaMap} finish={finish} placement={placement} />;
 }
 
 function FoilMesh({
   alphaMap,
   finish,
   placement,
-  radius,
 }: {
   alphaMap: Texture;
   finish: FoilSettings;
   placement: FacePlacement;
-  radius: number;
 }) {
   return (
     <mesh position={[0, 0, 0.003]} renderOrder={4}>
-      <RoundedFaceGeometry planeSize={placement.planeSize} radius={radius} />
+      <FacePanelGeometry planeSize={placement.planeSize} />
       <meshPhysicalMaterial
         alphaMap={alphaMap}
         color={finish.color}
@@ -490,11 +489,11 @@ function getSideTextureRotation(side: ArtworkSide, sideArtworkRotation: SideArtw
   }
 }
 
-function PlaceholderFace({ placement, radius, side }: { placement: FacePlacement; radius: number; side: ArtworkSide }) {
+function PlaceholderFace({ placement, side }: { placement: FacePlacement; side: ArtworkSide }) {
   return (
     <group position={placement.position} rotation={placement.rotation}>
       <mesh receiveShadow>
-        <RoundedFaceGeometry planeSize={placement.planeSize} radius={radius} />
+        <FacePanelGeometry planeSize={placement.planeSize} />
         <meshStandardMaterial
           color={SIDE_TINTS[side]}
           metalness={0}
@@ -508,22 +507,13 @@ function PlaceholderFace({ placement, radius, side }: { placement: FacePlacement
   );
 }
 
-function RoundedFaceGeometry({ planeSize, radius }: { planeSize: [number, number]; radius: number }) {
+function FacePanelGeometry({ planeSize }: { planeSize: [number, number] }) {
   const geometry = useMemo(() => {
     const [width, height] = planeSize;
-    const shape = createRoundedFaceShape(width, height, radius);
-    const faceGeometry = new ShapeGeometry(shape, 18);
-    const position = faceGeometry.attributes.position;
-    const uv = faceGeometry.attributes.uv;
-
-    for (let index = 0; index < position.count; index += 1) {
-      uv.setXY(index, (position.getX(index) + width / 2) / width, (position.getY(index) + height / 2) / height);
-    }
-
-    uv.needsUpdate = true;
+    const faceGeometry = new PlaneGeometry(width, height);
     faceGeometry.computeVertexNormals();
     return faceGeometry;
-  }, [planeSize, radius]);
+  }, [planeSize]);
 
   useEffect(() => {
     return () => geometry.dispose();

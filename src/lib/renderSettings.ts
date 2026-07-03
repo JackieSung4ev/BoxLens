@@ -1,7 +1,7 @@
 import type { BoxDimensions } from '../types';
 
 const MIN_DIMENSION_MM = 1;
-export const MAX_CORNER_RADIUS_MM = 10;
+export const MAX_CORNER_RADIUS_MM = 5;
 const DEFAULT_TARGET_LARGEST_AXIS = 2.7;
 
 export function clampCornerRadiusMm(cornerRadiusMm: number, dimensions: BoxDimensions): number {

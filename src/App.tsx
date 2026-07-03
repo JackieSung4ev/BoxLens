@@ -24,8 +24,9 @@ const DEFAULT_DIMENSIONS: BoxDimensions = {
 
 const DEFAULT_SETTINGS: RenderSettings = {
   backgroundColor: '#f7f9fb',
+  bevelSegments: 12,
   cameraLengthMm: 110,
-  cornerRadiusMm: 3,
+  cornerRadiusMm: 0.2,
   shadows: false,
   environment: false,
   environmentIntensity: 0.22,

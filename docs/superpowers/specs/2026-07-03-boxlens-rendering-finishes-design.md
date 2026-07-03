@@ -9,7 +9,7 @@ Improve BoxLens so packaging previews are closer to uploaded artwork while addin
 - RGB proof-style artwork display with reduced 3D color shift.
 - More realistic wood floor and additional material presets such as marble.
 - A fullscreen button in the top-right of the 3D preview.
-- Adjustable box corner radius in millimeters.
+- Adjustable Blender-style box edge bevel width in millimeters, plus bevel segments.
 - Adjustable camera lens length for wider or more compressed product-shot perspective.
 - Hot foil preview using both uploaded masks and automatic gold/yellow detection.
 
@@ -20,7 +20,7 @@ The feature remains a browser-side 3D preview. It is not an ICC-managed print pr
 The app is a React, Vite, Three.js, and React Three Fiber frontend. The 3D scene is concentrated in:
 
 - `src/components/Scene.tsx`: renderer setup, lighting, surfaces, shadows, camera controls.
-- `src/components/BoxMockup.tsx`: rounded box body, face planes, uploaded artwork textures, solid color faces.
+- `src/components/BoxMockup.tsx`: edge-beveled box body, face planes, uploaded artwork textures, solid color faces.
 - `src/components/Sidebar.tsx`: rendering controls.
 - `src/types.ts`: render settings and uploaded asset types.
 
@@ -28,8 +28,8 @@ Current limitations:
 
 - The renderer uses scene lighting and tone mapping, so artwork can appear different from the browser-decoded RGB image.
 - Wood surfaces use procedural canvas textures and look synthetic.
-- The box radius is hardcoded in normalized scene units.
-- Artwork is rendered as independent rectangular face planes, so changing only the rounded box body would leave square artwork corners.
+- The box edge treatment is hardcoded in normalized scene units.
+- Artwork is rendered as independent rectangular face planes, so beveling only the box body would let artwork overlap beveled edge bands.
 - Finishing processes such as hot foil are not represented.
 
 ## Design
@@ -76,24 +76,26 @@ Behavior:
 - Update icon/label when fullscreen exits via browser controls.
 - Keep the button outside the WebGL scene for accessibility, focus, and reliable browser behavior.
 
-### Adjustable Corner Radius
+### Adjustable Edge Bevel
 
-Add `cornerRadiusMm` to `RenderSettings`.
+Add an adjustable edge bevel width to `RenderSettings` in millimeters, plus an integer bevel segment count. The existing internal `cornerRadiusMm` setting name may remain during implementation, but the user-facing behavior is edge bevel, not vertex-point or face-corner rounding.
 
 Behavior:
 
-- Default to a subtle radius equivalent to the current visual treatment.
+- Default bevel width to 0.2mm for a subtle product-render edge treatment.
 - Add a sidebar range/input control in millimeters.
-- Clamp radius to a safe maximum based on the smallest box dimension so geometry cannot self-intersect.
+- Clamp bevel width to a safe maximum based on the smallest box dimension so geometry cannot self-intersect.
+- Default bevel segments to 12 for a rounded product-render profile.
+- Allow segment count from 1 to 12, where 1 is a flat chamfer and higher values approximate a smoother rounded bevel.
 - Convert millimeters to normalized scene units using the same dimension normalization scale used by the box geometry.
-- Apply the radius to the `RoundedBox`.
-- Clip or shape face artwork planes so visible artwork corners match the rounded body instead of staying square.
+- Apply the width and segments to a custom edge-beveled box geometry, like Blender's bevel modifier: the 12 box edges receive segmented bevel bands.
+- Inset face artwork planes by the bevel width so artwork stays on the flat main panels and does not visually round its own vertex points.
 
 Implementation direction:
 
-- Prefer a helper that creates rounded-rectangle face geometry for artwork/solid/placeholder faces.
-- Keep UVs compatible with existing cover texture transforms.
-- Use the same rounded geometry for artwork, solid color, placeholders, and foil overlays.
+- Prefer a helper that creates edge-beveled box geometry from six inset main faces, 12 segmented bevel bands, and corner connector faces.
+- Use simple rectangular plane geometry for artwork, solid color, placeholders, and foil overlays.
+- Keep UVs compatible with existing cover texture transforms on the inset rectangular panels.
 
 ### Adjustable Camera Lens Length
 
@@ -146,7 +148,7 @@ Mode behavior:
 3D rendering:
 
 - Overlay a very slightly offset face mesh above the artwork.
-- Use the same rounded face geometry as the artwork plane.
+- Use the same inset rectangular face geometry as the artwork plane.
 - Use a metallic gold material with high metalness, low roughness, environment sensitivity, and the computed mask as alpha.
 - Keep the layer thin and offset enough to avoid z-fighting without looking detached.
 
@@ -157,7 +159,8 @@ Controls should stay in the existing sidebar and use the current compact operati
 Additions:
 
 - Box dimensions section:
-  - Corner radius control in millimeters, using a range/input pair or compact numeric input with slider.
+  - Edge bevel width control in millimeters, using 0.05mm slider precision and a 5mm cap.
+  - Edge bevel segments control, default 12, with integer values from 1 to 12.
 
 - Rendering section:
   - Camera lens length control in millimeters, shown as a compact slider with the current mm value.
@@ -182,15 +185,15 @@ Accessibility:
 
 Unit/component tests:
 
-- Default settings include RGB proof display, default corner radius, and foil settings for all faces.
-- Corner radius control updates render settings and clamps invalid values.
+- Default settings include RGB proof display, default edge bevel width, default bevel segments, and foil settings for all faces.
+- Edge bevel width and segment controls update render settings and clamp invalid values.
 - Camera lens length control updates render settings and passes the value to the 3D scene.
 - Camera framing tests verify 110mm starts farther back, allows additional dolly-out distance, and keeps fog beyond the active camera range.
 - Restore default settings resets rendering controls while preserving uploaded artwork and box dimensions.
 - Foil mode controls update the correct face.
 - Foil mask upload creates an object URL and remove revokes it.
 - Auto foil detection helper identifies saturated gold/yellow pixels and rejects neutral beige/gray pixels.
-- Rounded face geometry helper returns valid positions/UVs and handles zero radius.
+- Edge-beveled box geometry helper returns valid inset main faces and segmented edge bevel bands, defaults to 12 segments, and handles zero bevel.
 
 Build and browser verification:
 
@@ -206,13 +209,13 @@ Build and browser verification:
 
 - Browser-decoded RGB is the only reliable image source available client-side for uploaded files.
 - Automatic foil detection can misclassify artwork; uploaded masks remain the accurate workflow.
-- Rounded artwork clipping is more involved than changing the box radius alone and should be tested carefully across all six faces and side rotations.
+- Edge bevel geometry is more involved than changing a rounded box radius alone and should be tested carefully across all six faces and side rotations.
 - Metallic foil quality depends on lighting and environment maps; a studio environment may need to be enabled or simulated for the foil to read clearly.
 - Large uploaded artwork and masks may affect memory use; object URLs and generated textures must be disposed/revoked.
 
 ## Acceptance Criteria
 
-- User can adjust box corner radius in millimeters and the 3D box plus face artwork corners change together.
+- User can adjust box edge bevel width in millimeters and bevel segments; the 3D box shows segmented bevel bands along edges and face artwork remains on inset flat panels.
 - User can adjust camera lens length between wide-angle and compressed product-shot perspectives.
 - User can restore rendering defaults without losing uploaded artwork or edited dimensions.
 - User can enable hot foil preview from auto detection, uploaded mask, or both.

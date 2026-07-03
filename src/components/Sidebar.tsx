@@ -25,6 +25,8 @@ const SIDE_ROTATION_OPTIONS: SideArtworkRotation[] = ['none', 'rotate90', 'rotat
 const LIGHTING_PRESET_OPTIONS: LightingPreset[] = ['softbox', 'studio', 'crisp', 'dramatic'];
 const LIGHT_DIRECTION_OPTIONS: LightDirection[] = ['frontRight', 'frontLeft', 'top', 'sideRight'];
 const SURFACE_OPTIONS: SurfacePreset[] = ['none', 'woodFloor', 'marble'];
+const MIN_BEVEL_SEGMENTS = 1;
+const MAX_BEVEL_SEGMENTS = 12;
 
 interface SidebarProps {
   artwork: ArtworkMap;
@@ -182,7 +184,7 @@ export function Sidebar({
             <label className="block rounded-lg border border-ink-100 px-3 py-2">
               <span className="flex items-center justify-between gap-3 text-sm font-medium text-ink-900">
                 {copy.cornerRadius}
-                <span className="tabular-nums text-xs text-ink-500">{settings.cornerRadiusMm.toFixed(1)} mm</span>
+                <span className="tabular-nums text-xs text-ink-500">{settings.cornerRadiusMm.toFixed(2)} mm</span>
               </span>
               <input
                 aria-label={copy.cornerRadius}
@@ -195,9 +197,31 @@ export function Sidebar({
                     cornerRadiusMm: clampCornerRadiusMm(event.target.valueAsNumber, dimensions),
                   })
                 }
-                step={0.1}
+                step={0.05}
                 type="range"
                 value={settings.cornerRadiusMm}
+              />
+            </label>
+
+            <label className="block rounded-lg border border-ink-100 px-3 py-2">
+              <span className="flex items-center justify-between gap-3 text-sm font-medium text-ink-900">
+                {copy.bevelSegments}
+                <span className="tabular-nums text-xs text-ink-500">{settings.bevelSegments.toFixed(0)}</span>
+              </span>
+              <input
+                aria-label={copy.bevelSegments}
+                className="mt-2 w-full accent-lens-600"
+                max={MAX_BEVEL_SEGMENTS}
+                min={MIN_BEVEL_SEGMENTS}
+                onChange={(event) =>
+                  onSettingsChange({
+                    ...settings,
+                    bevelSegments: clampBevelSegments(event.target.valueAsNumber),
+                  })
+                }
+                step={1}
+                type="range"
+                value={settings.bevelSegments}
               />
             </label>
 
@@ -353,4 +377,12 @@ export function Sidebar({
       </div>
     </aside>
   );
+}
+
+function clampBevelSegments(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 6;
+  }
+
+  return Math.max(MIN_BEVEL_SEGMENTS, Math.min(MAX_BEVEL_SEGMENTS, Math.round(value)));
 }

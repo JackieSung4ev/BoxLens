@@ -2,15 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement RGB proof rendering, realistic wood, fullscreen preview, adjustable corner radius, and hot foil preview with both mask upload and automatic detection.
+**Goal:** Implement RGB proof rendering, realistic wood, fullscreen preview, adjustable edge bevel width and segments, and hot foil preview with both mask upload and automatic detection.
 
-**Architecture:** Keep React state in `App.tsx`, UI controls in existing sidebar/artwork components, and 3D behavior in focused helpers consumed by `Scene.tsx` and `BoxMockup.tsx`. Add pure helpers for radius conversion and foil auto-detection so the riskiest behavior is unit-tested before Three.js wiring.
+**Architecture:** Keep React state in `App.tsx`, UI controls in existing sidebar/artwork components, and 3D behavior in focused helpers consumed by `Scene.tsx` and `BoxMockup.tsx`. Add pure helpers for bevel conversion, segmented edge-beveled geometry, and foil auto-detection so the riskiest behavior is unit-tested before Three.js wiring.
 
 **Tech Stack:** React 18, TypeScript, Vite, Vitest, React Testing Library, Three.js, @react-three/fiber, @react-three/drei, Tailwind CSS, Lucide React.
 
 ---
 
-### Task 1: Radius And Foil Helper Tests
+### Task 1: Bevel And Foil Helper Tests
 
 **Files:**
 - Create: `src/lib/renderSettings.ts`
@@ -19,9 +19,9 @@
 - Create: `src/lib/foilDetection.test.ts`
 - Modify: `src/types.ts`
 
-- [x] **Step 1: Write failing tests for radius clamping and scene-unit conversion**
+- [x] **Step 1: Write failing tests for bevel clamping and scene-unit conversion**
 
-Add tests that expect `clampCornerRadiusMm(30, { width: 40, height: 80, depth: 20 })` to clamp to `10`, and `cornerRadiusMmToSceneUnits(3, { width: 120, height: 180, depth: 60 })` to return `0.045`.
+Add tests that expect `clampCornerRadiusMm(30, { width: 40, height: 80, depth: 6 })` to clamp to `3`, `clampCornerRadiusMm(16, { width: 120, height: 180, depth: 60 })` to clamp to `5`, and `cornerRadiusMmToSceneUnits(3, { width: 120, height: 180, depth: 60 })` to return `0.045`.
 
 - [x] **Step 2: Run radius tests and verify RED**
 
@@ -29,7 +29,7 @@ Run: `npm test -- src/lib/renderSettings.test.ts`
 
 Expected: fail because `src/lib/renderSettings.ts` does not exist.
 
-- [x] **Step 3: Implement radius helpers and types**
+- [x] **Step 3: Implement bevel helpers and types**
 
 Add `cornerRadiusMm`, `rgbProof`, `FoilMode`, `FoilSettings`, and `FinishSettingsMap` types. Implement `clampCornerRadiusMm`, `getDimensionScale`, and `cornerRadiusMmToSceneUnits`.
 
@@ -70,7 +70,7 @@ Expected: pass.
 
 - [x] **Step 1: Write failing App tests for new settings**
 
-Extend the mocked scene to expose `data-corner-radius`, `data-rgb-proof`, and foil mode attributes. Add tests for default RGB proof, default corner radius, corner radius updates, foil mode updates, and mask upload/remove state.
+Extend the mocked scene to expose `data-corner-radius` for the current internal setting, `data-bevel-segments`, `data-rgb-proof`, and foil mode attributes. Add tests for default RGB proof, default edge bevel width, default bevel segments, edge bevel updates, foil mode updates, and mask upload/remove state.
 
 - [x] **Step 2: Run App tests and verify RED**
 
@@ -93,33 +93,33 @@ Expected: pass.
 **Files:**
 - Modify: `src/components/Scene.tsx`
 - Modify: `src/components/BoxMockup.tsx`
-- Create: `src/lib/roundedFace.ts`
-- Create: `src/lib/roundedFace.test.ts`
+- Create: `src/lib/beveledBoxGeometry.ts`
+- Create: `src/lib/beveledBoxGeometry.test.ts`
 - Copy assets to: `public/textures/hardwood2_diffuse.jpg`, `public/textures/hardwood2_bump.jpg`, `public/textures/hardwood2_roughness.jpg`
 
-- [x] **Step 1: Write failing tests for rounded face shape**
+- [x] **Step 1: Write failing tests for edge-beveled box geometry**
 
-Test that zero radius creates a rectangle shape and positive radius is clamped to half the shortest edge.
+Test that zero bevel creates a plain six-face box, one segment creates a flat chamfer, and the default twelve segments create inset main faces plus rounded bevel bands along edges.
 
-- [x] **Step 2: Run rounded face tests and verify RED**
+- [x] **Step 2: Run edge bevel tests and verify RED**
 
-Run: `npm test -- src/lib/roundedFace.test.ts`
+Run: `npm test -- src/lib/beveledBoxGeometry.test.ts`
 
-Expected: fail because `src/lib/roundedFace.ts` does not exist.
+Expected: fail because `src/lib/beveledBoxGeometry.ts` does not exist.
 
-- [x] **Step 3: Implement rounded face helpers**
+- [x] **Step 3: Implement edge bevel helpers**
 
-Create rounded rectangle shape helpers for use with `shapeGeometry`.
+Create edge-beveled box geometry helpers for use by `BoxMockup`.
 
-- [x] **Step 4: Run rounded face tests and verify GREEN**
+- [x] **Step 4: Run edge bevel tests and verify GREEN**
 
-Run: `npm test -- src/lib/roundedFace.test.ts`
+Run: `npm test -- src/lib/beveledBoxGeometry.test.ts`
 
 Expected: pass.
 
-- [x] **Step 5: Wire rounded geometry and foil overlay into BoxMockup**
+- [x] **Step 5: Wire edge bevel geometry and foil overlay into BoxMockup**
 
-Use proof material when `settings.rgbProof` is true. Use rounded face geometry for artwork, solid, placeholders, and foil overlays. Generate auto foil masks in the browser, combine with uploaded masks according to mode, and dispose textures.
+Use proof material when `settings.rgbProof` is true. Use segmented edge-beveled box geometry for the body and inset rectangular geometry for artwork, solid, placeholders, and foil overlays. Generate auto foil masks in the browser, combine with uploaded masks according to mode, and dispose textures.
 
 - [x] **Step 6: Replace procedural wood with texture assets**
 
@@ -137,7 +137,7 @@ Add a top-right icon button in `Scene.tsx` using the Fullscreen API and accessib
 
 - [x] **Step 1: Update README feature list**
 
-Mention RGB proof preview, adjustable corner radius, hot foil preview, fullscreen preview, and realistic wood surfaces.
+Mention RGB proof preview, adjustable edge bevel width and segments, hot foil preview, fullscreen preview, and realistic wood surfaces.
 
 - [x] **Step 2: Run unit tests**
 

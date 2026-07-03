@@ -59,4 +59,25 @@ describe('getFacePlacement', () => {
       planeSize: [1.8, 0.9],
     });
   });
+
+  it('insets artwork planes from beveled edges without moving the face center', () => {
+    const size = { width: 1.8, height: 2.7, depth: 0.9 };
+    const edgeBevel = 0.1;
+
+    expect(getFacePlacement('front', size, edgeBevel)).toMatchObject({
+      position: [0, 0, 0.451],
+      rotation: [0, 0, 0],
+      planeSize: [1.6, 2.5],
+    });
+    expect(getFacePlacement('left', size, edgeBevel)).toMatchObject({
+      position: [-0.901, 0, 0],
+      rotation: [0, -Math.PI / 2, 0],
+      planeSize: [0.7, 2.5],
+    });
+    expect(getFacePlacement('top', size, edgeBevel)).toMatchObject({
+      position: [0, 1.351, 0],
+      rotation: [-Math.PI / 2, 0, 0],
+      planeSize: [1.6, 0.7],
+    });
+  });
 });

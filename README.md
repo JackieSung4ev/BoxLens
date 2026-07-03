@@ -8,7 +8,7 @@ The app is designed for packaging designers who need quick visual mockups from f
 
 - Live 3D box preview with editable width, height, and depth in millimeters.
 - Adjustable camera lens length, defaulting to 110 mm.
-- Adjustable box corner radius with 0.1 mm precision and a practical 10 mm cap.
+- Blender-style edge bevel width with 0.05 mm precision, adjustable segments, and a practical 5 mm cap.
 - Drag-and-drop artwork upload for each box face.
 - Folder and filename auto-matching for face names such as `front`, `back`, `left`, `right`, `top`, and `bottom`.
 - Per-face display modes: artwork or solid color.
@@ -65,7 +65,7 @@ If `npm run dev` reports that `vite` is not recognized, run `npm install` first 
 2. Upload PNG/JPG artwork for the front, back, left, right, top, or bottom faces.
 3. Use face filenames or folders such as `front.png`, `back-panel.jpg`, or `artwork/front/panel.png` to auto-match sides.
 4. Choose artwork or solid color for each face.
-5. Tune RGB proof preview, camera length, corner radius, background, lighting, surface, and shadow settings.
+5. Tune RGB proof preview, camera length, edge bevel width and segments, background, lighting, surface, and shadow settings.
 6. Enable hot foil preview if the design needs metallic process simulation.
 7. Rotate the 3D preview, use fullscreen when needed, then export the current view as PNG.
 
@@ -73,7 +73,7 @@ If `npm run dev` reports that `vite` is not recognized, run `npm install` first 
 
 - **RGB proof preview:** Keeps artwork colors closer to the uploaded browser image. This is useful when source artwork was designed in CMYK but exported as RGB for preview.
 - **Camera lens length:** Changes perspective compression. Longer values look flatter and more product-photo-like.
-- **Corner radius:** Supports fine 0.1 mm adjustments and is capped at 10 mm.
+- **Edge bevel:** Blender-style edge bevel preview with fine 0.05 mm width adjustments, capped at 5 mm. Segment count defaults to 12 for a rounded profile, while 1 gives a flat chamfer.
 - **Background:** Includes multiple quick presets and a custom color input.
 - **Surface:** Choose no surface, wood floor, or marble.
 - **Lighting:** Select a lighting preset, intensity, and direction. Environment lighting is optional.

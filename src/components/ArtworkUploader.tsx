@@ -304,9 +304,9 @@ function ArtworkSlot({
             ) : null}
           </div>
 
-          <fieldset className="space-y-5">
+          <fieldset className="min-w-0 space-y-5">
             <legend className="sr-only">{formatMessage(copy.faceAppearanceLabel, { side: sideLabel })}</legend>
-            <div className="space-y-3">
+            <div className="min-w-0 space-y-3">
               <p className="text-base font-semibold leading-6 text-ink-950">{copy.displayContent}</p>
               <div className="grid grid-cols-2 gap-1 rounded-xl border border-ink-200 bg-white p-1">
                 {(['artwork', 'solid'] as const).map((mode) => {
@@ -348,7 +348,7 @@ function ArtworkSlot({
               ) : null}
             </div>
 
-            <div className="space-y-3">
+            <div className="min-w-0 space-y-3">
               <p className="text-base font-semibold leading-6 text-ink-950">{copy.effectSettings}</p>
               <div className="overflow-hidden rounded-xl border border-proof-200 bg-proof-100/70">
                 <button
@@ -525,9 +525,13 @@ function SolidColorControls({
   };
 
   return (
-    <div className="space-y-2 rounded-lg border border-ink-100 bg-ink-50/60 p-2" key="solid-color">
-      <div className="flex items-end gap-2">
-        <label className="grid gap-1">
+    <div
+      className="min-w-0 space-y-2 overflow-hidden rounded-lg border border-ink-100 bg-ink-50/60 p-2"
+      data-testid="solid-color-controls"
+      key="solid-color"
+    >
+      <div className="grid min-w-0 grid-cols-1 gap-2" data-testid="solid-color-base-controls">
+        <label className="grid min-w-0 gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.faceColor}</span>
           <span className="flex items-center gap-2">
             <span
@@ -545,7 +549,7 @@ function SolidColorControls({
           </span>
         </label>
 
-        <label className="grid min-w-[96px] flex-1 gap-1">
+        <label className="grid min-w-0 gap-1">
           <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.colorMode}</span>
           <select
             aria-label={copy.colorMode}
@@ -563,7 +567,7 @@ function SolidColorControls({
       </div>
 
       {appearance.colorMode === 'rgb' ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid min-w-0 grid-cols-3 gap-2">
           <ChannelInput
             label={copy.colorChannels.red}
             max={255}
@@ -587,7 +591,7 @@ function SolidColorControls({
           />
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
           <ChannelInput
             label={copy.colorChannels.cyan}
             max={100}

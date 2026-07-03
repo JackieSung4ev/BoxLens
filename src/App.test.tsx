@@ -177,6 +177,17 @@ describe('App', () => {
     expect(screen.getByTestId('scene-preview')).toHaveAttribute('data-front-color', '#c8e51a');
   });
 
+  it('keeps solid color controls inside the narrow artwork card', () => {
+    render(<App />);
+
+    const frontAppearance = screen.getByRole('group', { name: 'Front face appearance' });
+
+    fireEvent.click(within(frontAppearance).getByLabelText('Solid color'));
+
+    expect(within(frontAppearance).getByTestId('solid-color-controls')).toHaveClass('min-w-0', 'overflow-hidden');
+    expect(within(frontAppearance).getByTestId('solid-color-base-controls')).toHaveClass('grid', 'grid-cols-1');
+  });
+
   it('lets users edit a solid face color with RGB and CMYK channels', () => {
     render(<App />);
 

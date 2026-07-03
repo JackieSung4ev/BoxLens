@@ -16,6 +16,13 @@ import {
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { BoxMockup } from './BoxMockup';
 import { normalizeDimensions } from '../lib/boxGeometry';
+import {
+  CAMERA_BASE_POSITION,
+  getCameraDistanceForFocalLength,
+  getCameraFogRange,
+  getCameraMaxDistance,
+  getCameraPositionForFocalLength,
+} from '../lib/cameraFraming';
 import type {
   ArtworkMap,
   BoxDimensions,
@@ -37,7 +44,8 @@ interface SceneProps {
   settings: RenderSettings;
 }
 
-const CAMERA_POSITION = new Vector3(3.35, 2.35, 4.25);
+const CAMERA_TARGET = new Vector3(0, 0, 0);
+const CAMERA_BASE_DIRECTION = new Vector3(...CAMERA_BASE_POSITION).normalize();
 
 const LIGHTING_PRESETS: Record<
   LightingPreset,
@@ -125,6 +133,11 @@ export function Scene({
   const lighting = LIGHTING_PRESETS[settings.lightingPreset];
   const direction = LIGHT_DIRECTIONS[settings.lightDirection];
   const lightScale = settings.lightIntensity;
+  const cameraPosition = useMemo(
+    () => getCameraPositionForFocalLength(settings.cameraLengthMm),
+    [settings.cameraLengthMm],
+  );
+  const fogRange = useMemo(() => getCameraFogRange(settings.cameraLengthMm), [settings.cameraLengthMm]);
   const toggleFullscreen = useCallback(() => {
     const element = previewRef.current;
     if (!element) {
@@ -156,7 +169,7 @@ export function Scene({
       ref={previewRef}
     >
       <Canvas
-        camera={{ fov: 34, position: CAMERA_POSITION.toArray(), near: 0.1, far: 100 }}
+        camera={{ fov: 34, position: cameraPosition, near: 0.1, far: 100 }}
         dpr={[1, 2]}
         gl={{ alpha: false, antialias: true, preserveDrawingBuffer: true }}
         shadows={settings.shadows}
@@ -167,7 +180,7 @@ export function Scene({
           shadows={settings.shadows}
         />
         <color args={[settings.backgroundColor]} attach="background" />
-        <fog attach="fog" args={[settings.backgroundColor, 8, 13]} />
+        <fog attach="fog" args={[settings.backgroundColor, fogRange.near, fogRange.far]} />
         <ambientLight intensity={lighting.ambient * lightScale} />
         <hemisphereLight args={['#ffffff', '#c2cad6', lighting.hemisphere * lightScale]} />
         <directionalLight
@@ -202,7 +215,7 @@ export function Scene({
           <SurfaceStage floorY={floorY} preset={settings.surface} size={normalizedSize} />
         </Suspense>
         {settings.shadows ? <SoftGroundShadow floorY={floorY} size={normalizedSize} /> : null}
-        <StudioCameraControls resetToken={resetToken} />
+        <StudioCameraControls cameraLengthMm={settings.cameraLengthMm} resetToken={resetToken} />
       </Canvas>
       <div className="pointer-events-none absolute left-4 top-4 rounded-lg border border-white/70 bg-white/85 px-3 py-2 text-xs font-medium text-ink-700 shadow-control backdrop-blur">
         {Math.max(1, dimensions.width)} x {Math.max(1, dimensions.height)} x {Math.max(1, dimensions.depth)} mm
@@ -424,8 +437,7 @@ function RendererSetup({
   const { camera, gl, invalidate } = useThree();
 
   useEffect(() => {
-    camera.position.copy(CAMERA_POSITION);
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(CAMERA_TARGET);
     camera.updateMatrixWorld();
     onCanvasReady(gl.domElement);
 
@@ -451,18 +463,29 @@ function RendererSetup({
   return null;
 }
 
-function StudioCameraControls({ resetToken }: { resetToken: number }) {
+function StudioCameraControls({ cameraLengthMm, resetToken }: { cameraLengthMm: number; resetToken: number }) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
+  const previousResetTokenRef = useRef(resetToken);
   const { camera, invalidate } = useThree();
 
   useEffect(() => {
-    camera.position.copy(CAMERA_POSITION);
-    camera.lookAt(0, 0, 0);
+    const controls = controlsRef.current;
+    const target = controls?.target ?? CAMERA_TARGET;
+    const shouldResetAngle = previousResetTokenRef.current !== resetToken;
+    previousResetTokenRef.current = resetToken;
+    const currentDirection = camera.position.clone().sub(target);
+    const direction =
+      shouldResetAngle || currentDirection.lengthSq() === 0
+        ? CAMERA_BASE_DIRECTION.clone()
+        : currentDirection.normalize();
+
+    camera.position.copy(target).add(direction.multiplyScalar(getCameraDistanceForFocalLength(cameraLengthMm)));
+    camera.lookAt(target);
     camera.updateMatrixWorld();
-    controlsRef.current?.target.set(0, 0, 0);
-    controlsRef.current?.update();
+    controls?.target.copy(target);
+    controls?.update();
     invalidate();
-  }, [camera, invalidate, resetToken]);
+  }, [camera, cameraLengthMm, invalidate, resetToken]);
 
   return (
     <OrbitControls
@@ -472,7 +495,7 @@ function StudioCameraControls({ resetToken }: { resetToken: number }) {
       enableRotate
       enableZoom
       makeDefault
-      maxDistance={9}
+      maxDistance={getCameraMaxDistance(cameraLengthMm)}
       minDistance={2.2}
       panSpeed={0.7}
       target={[0, 0, 0]}

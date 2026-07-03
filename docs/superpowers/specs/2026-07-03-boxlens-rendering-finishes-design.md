@@ -106,6 +106,8 @@ Behavior:
 - Lower values make the scene wider and more perspective-heavy.
 - Higher values compress perspective for a cleaner catalog-style look.
 - Apply changes through `PerspectiveCamera.setFocalLength()` without resetting the user's current orbit angle.
+- Scale the default camera distance and maximum dolly-out distance with focal length so 110mm remains visible and can still be pulled farther away.
+- Keep the scene fog range beyond the focal-length-aware camera distances so pulling back does not fade the package into the background.
 
 ### Hot Foil Preview
 
@@ -183,6 +185,7 @@ Unit/component tests:
 - Default settings include RGB proof display, default corner radius, and foil settings for all faces.
 - Corner radius control updates render settings and clamps invalid values.
 - Camera lens length control updates render settings and passes the value to the 3D scene.
+- Camera framing tests verify 110mm starts farther back, allows additional dolly-out distance, and keeps fog beyond the active camera range.
 - Restore default settings resets rendering controls while preserving uploaded artwork and box dimensions.
 - Foil mode controls update the correct face.
 - Foil mask upload creates an object URL and remove revokes it.

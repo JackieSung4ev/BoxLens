@@ -1,6 +1,8 @@
 node_modules/
 dist/
 artifacts/
+compare-preview.html
+preview-assets/
 *.log
 .env
 .env.*

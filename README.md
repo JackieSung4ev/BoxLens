@@ -1,44 +1,139 @@
 # BoxLens
 
-BoxLens is a frontend-only, real-time 3D packaging mockup tool for rectangular product boxes. It runs locally in the browser with React, Three.js, Vite, and Tailwind CSS.
+BoxLens is a frontend-only, real-time 3D packaging mockup tool for rectangular product boxes. It runs locally in the browser with React, Three.js, Vite, Tailwind CSS, and React Three Fiber.
+
+The app is designed for packaging designers who need quick visual mockups from flat artwork, editable box dimensions, material-like preview surfaces, lighting controls, and exportable PNG renders.
 
 ## Features
 
-- Live 3D box preview with editable width, height, depth, corner radius, and camera lens length in millimeters.
-- Drag-and-drop artwork upload for each face, with folder/file auto-matching for side names such as front, back, left, right, top, and bottom.
-- Per-face appearance modes: artwork or solid color.
-- Solid color editing in RGB or CMYK inputs, with an RGB proof preview toggle to reduce artwork color shifts in the 3D view.
-- Hot foil preview per face, using automatic gold detection, uploaded mask images, or both.
-- Side artwork rotation control, defaulting to no rotation for pre-rotated designs.
-- Lighting controls for preset, intensity, direction, optional environment lighting, and environment intensity.
-- Restore default settings button for rendering controls without clearing artwork or box dimensions.
-- Shadows are off by default, with an optional shadow toggle.
-- Optional texture-based wood floor or marble surface under the package.
-- English and Chinese UI with automatic browser-language detection plus manual switching.
+- Live 3D box preview with editable width, height, and depth in millimeters.
+- Adjustable camera lens length, defaulting to 110 mm.
+- Adjustable box corner radius with 0.1 mm precision and a practical 10 mm cap.
+- Drag-and-drop artwork upload for each box face.
+- Folder and filename auto-matching for face names such as `front`, `back`, `left`, `right`, `top`, and `bottom`.
+- Per-face display modes: artwork or solid color.
+- Solid color editing with RGB and CMYK channel inputs.
+- RGB proof preview mode to keep uploaded artwork closer to browser image colors in the 3D view.
+- Per-face hot foil preview using automatic gold detection, uploaded mask images, or both.
+- Side artwork rotation controls for pre-rotated source files.
+- Background color presets plus a custom background color picker.
+- Lighting controls for preset, intensity, direction, environment lighting, and environment intensity.
+- Optional preview surfaces, including wood floor and marble.
+- Shadows are off by default and can be enabled when needed.
+- Restore default rendering settings without clearing artwork or box dimensions.
 - Fullscreen preview button in the 3D canvas.
 - PNG export of the current WebGL view.
+- English and Chinese UI with automatic browser-language detection and manual switching.
+
+## Supported Artwork Formats
+
+BoxLens currently accepts PNG and JPG/JPEG files for artwork uploads.
+
+Illustrator `.ai` files are not imported directly. For Illustrator or CMYK packaging artwork, export each panel as an RGB PNG or JPG first, then upload those exported images into BoxLens.
+
+SVG upload is intentionally not advertised or accepted in the main artwork flow, because the current preview pipeline is tuned for raster packaging artwork.
+
+## Requirements
+
+- Node.js 20 or newer is recommended.
+- npm, included with Node.js.
+- A modern Chromium-based browser is recommended for WebGL preview and PNG export.
 
 ## Getting Started
 
+Clone the repository and install dependencies:
+
 ```bash
+git clone https://github.com/JackieSung4ev/BoxLens.git
+cd BoxLens
 npm install
+```
+
+Start the local dev server:
+
+```bash
 npm run dev
 ```
 
-Then open the Vite URL shown in the terminal.
+Open the Vite URL shown in the terminal. The default command binds Vite to `127.0.0.1`.
+
+If `npm run dev` reports that `vite` is not recognized, run `npm install` first so the local project dependencies are installed.
+
+## Basic Workflow
+
+1. Set the box width, height, and depth in millimeters.
+2. Upload PNG/JPG artwork for the front, back, left, right, top, or bottom faces.
+3. Use face filenames or folders such as `front.png`, `back-panel.jpg`, or `artwork/front/panel.png` to auto-match sides.
+4. Choose artwork or solid color for each face.
+5. Tune RGB proof preview, camera length, corner radius, background, lighting, surface, and shadow settings.
+6. Enable hot foil preview if the design needs metallic process simulation.
+7. Rotate the 3D preview, use fullscreen when needed, then export the current view as PNG.
+
+## Rendering Controls
+
+- **RGB proof preview:** Keeps artwork colors closer to the uploaded browser image. This is useful when source artwork was designed in CMYK but exported as RGB for preview.
+- **Camera lens length:** Changes perspective compression. Longer values look flatter and more product-photo-like.
+- **Corner radius:** Supports fine 0.1 mm adjustments and is capped at 10 mm.
+- **Background:** Includes multiple quick presets and a custom color input.
+- **Surface:** Choose no surface, wood floor, or marble.
+- **Lighting:** Select a lighting preset, intensity, and direction. Environment lighting is optional.
+- **Restore default settings:** Resets rendering controls only; dimensions and uploaded artwork stay intact.
+
+## Hot Foil Preview
+
+Hot foil can be configured per face:
+
+- **Off:** No foil effect.
+- **Auto gold detection:** Detects gold/yellow-ish regions from the artwork preview.
+- **Mask image:** Uses an uploaded mask image for foil placement.
+- **Auto + mask:** Combines automatic detection with a mask.
+
+The effect is a visual mockup aid, not a production proof.
 
 ## Scripts
 
+Run the test suite:
+
 ```bash
 npm test
+```
+
+Create a production build:
+
+```bash
 npm run build
+```
+
+Run browser verification:
+
+```bash
+npm run dev -- --port 5177
 npm run verify:browser
 ```
 
-`npm run verify:browser` starts from the configured local URL, checks desktop and mobile rendering, verifies the WebGL canvas is nonblank, and confirms PNG export works.
+`npm run verify:browser` expects a running local app at `http://127.0.0.1:5177/` by default. You can point it at another URL with `BOXLENS_URL`.
 
-## Notes
+The browser verification checks desktop and mobile rendering, verifies that the WebGL canvas is nonblank, and confirms PNG export works.
 
-- BoxLens is frontend-only. Uploaded artwork stays in the browser session and is not sent to a server.
-- For folder uploads, name files or parent folders after the target face so BoxLens can match them automatically.
-- CMYK input is intended for convenient package-design color entry, not for print-proof color management.
+## Project Structure
+
+```text
+src/
+  components/      React UI and Three.js scene components
+  lib/             Geometry, rendering, color, texture, and i18n utilities
+  App.tsx          App state and layout shell
+scripts/
+  verify-canvas.mjs Playwright-based browser verification
+public/textures/   Preview surface texture assets
+```
+
+## Privacy
+
+BoxLens is frontend-only. Uploaded artwork stays in the local browser session and is not sent to a server by this app.
+
+## Limitations
+
+- BoxLens is a browser-side visual mockup tool, not an ICC-managed print proof.
+- CMYK inputs are for convenient color entry and RGB preview conversion; they do not replace Illustrator, prepress, or press checks.
+- Illustrator `.ai` files should be exported to PNG/JPG before upload.
+- Hot foil detection is approximate and should be treated as a preview convenience.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchArtworkSideByFilename } from './artworkAutoMatch';
+import { isArtworkImageFile, matchArtworkSideByFilename } from './artworkAutoMatch';
 
 describe('matchArtworkSideByFilename', () => {
   it('matches English side names in artwork filenames', () => {
@@ -27,5 +27,14 @@ describe('matchArtworkSideByFilename', () => {
 
   it('returns null when the filename does not identify a face', () => {
     expect(matchArtworkSideByFilename('brand-logo.png')).toBeNull();
+  });
+
+  it('only accepts png and jpeg files for artwork uploads', () => {
+    expect(isArtworkImageFile({ name: 'front.png', type: 'image/png' })).toBe(true);
+    expect(isArtworkImageFile({ name: 'front.jpg', type: 'image/jpeg' })).toBe(true);
+    expect(isArtworkImageFile({ name: 'front.jpeg' })).toBe(true);
+    expect(isArtworkImageFile({ name: 'front.ai', type: 'application/postscript' })).toBe(false);
+    expect(isArtworkImageFile({ name: 'front.svg', type: 'image/svg+xml' })).toBe(false);
+    expect(isArtworkImageFile({ name: 'front.webp', type: 'image/webp' })).toBe(false);
   });
 });

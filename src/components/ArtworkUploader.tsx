@@ -236,7 +236,7 @@ function ArtworkSlot({
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
     >
-      <div className="grid gap-5 sm:grid-cols-[minmax(176px,0.9fr)_minmax(0,1.15fr)] sm:items-stretch">
+      <div className="grid gap-4 sm:grid-cols-[minmax(150px,0.86fr)_minmax(0,1.14fr)] sm:items-stretch">
         <label
           className={`group relative flex min-h-[224px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border bg-white px-4 text-center transition ${
             asset || appearance.mode === 'solid'
@@ -245,7 +245,7 @@ function ArtworkSlot({
           }`}
         >
           <input
-            accept="image/png,image/jpeg,image/svg+xml,image/*"
+            accept="image/png,image/jpeg"
             aria-label={formatMessage(copy.uploadArtworkInputLabel, { side: sideLabel })}
             className="sr-only"
             onChange={handleArtworkInputChange}
@@ -314,7 +314,7 @@ function ArtworkSlot({
 
                   return (
                     <label
-                      className={`relative inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-sm font-semibold leading-none transition sm:text-base ${
+                      className={`relative inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-1.5 text-sm font-semibold leading-none transition ${
                         appearance.mode === mode
                           ? 'bg-lens-600 text-white shadow-control'
                           : 'text-ink-950 hover:bg-ink-50'
@@ -330,7 +330,7 @@ function ArtworkSlot({
                         type="radio"
                         value={mode}
                       />
-                      <ModeIcon aria-hidden="true" className="pointer-events-none shrink-0" size={18} />
+                      <ModeIcon aria-hidden="true" className="pointer-events-none shrink-0" size={16} />
                       <span className="pointer-events-none truncate">
                         {mode === 'artwork' ? copy.artworkModeShort : copy.solidColorModeShort}
                       </span>

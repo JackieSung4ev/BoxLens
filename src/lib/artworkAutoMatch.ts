@@ -6,7 +6,8 @@ type ArtworkFileLike = {
   webkitRelativePath?: string;
 };
 
-const IMAGE_EXTENSION_PATTERN = /\.(avif|bmp|gif|jpe?g|png|svg|webp)$/i;
+const ARTWORK_IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png)$/i;
+const ARTWORK_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png']);
 const TOKEN_START = String.raw`(^|[\s._-])`;
 const TOKEN_END = String.raw`($|[\s._-])`;
 
@@ -34,7 +35,7 @@ export function matchArtworkSideByFilename(filename: string): ArtworkSide | null
 }
 
 export function isArtworkImageFile(file: ArtworkFileLike): boolean {
-  return file.type?.startsWith('image/') === true || IMAGE_EXTENSION_PATTERN.test(file.name);
+  return ARTWORK_IMAGE_MIME_TYPES.has(file.type ?? '') || ARTWORK_IMAGE_EXTENSION_PATTERN.test(file.name);
 }
 
 export function matchArtworkFilesBySide<T extends ArtworkFileLike>(files: T[]): Partial<Record<ArtworkSide, T>> {

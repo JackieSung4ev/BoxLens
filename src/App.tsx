@@ -216,7 +216,7 @@ export default function App() {
 
   return (
     <main className="min-h-dvh bg-ink-100 text-ink-900 lg:h-dvh lg:overflow-hidden">
-      <div className="grid min-h-dvh grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(500px,36vw)_minmax(0,1fr)]">
+      <div className="grid min-h-dvh grid-cols-1 lg:h-full lg:min-h-0 lg:grid-cols-[440px_minmax(0,1fr)]">
         <Sidebar
           artwork={artwork}
           copy={copy}

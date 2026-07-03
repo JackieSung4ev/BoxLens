@@ -183,7 +183,7 @@ export const translations = {
     faceAppearanceLabel: '{side}面外观',
     displayContent: '展示内容',
     artworkMode: '设计稿',
-    artworkModeShort: '设计稿',
+    artworkModeShort: '图稿',
     solidColorMode: '纯色',
     solidColorModeShort: '纯色',
     faceColor: '面颜色',

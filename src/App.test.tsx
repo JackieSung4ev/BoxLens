@@ -52,10 +52,14 @@ describe('App', () => {
     }
 
     expect(screen.getByText('Primary view')).toBeInTheDocument();
-    expect(screen.getAllByText('Drop artwork')).toHaveLength(6);
+    expect(screen.getAllByText('Upload artwork')).toHaveLength(6);
+    expect(screen.getAllByText('Supports PNG / JPG / SVG')).toHaveLength(6);
+    expect(screen.getAllByText('Display content')).toHaveLength(6);
+    expect(screen.getAllByText('Effect settings')).toHaveLength(6);
     expect(container.innerHTML).not.toContain('bg-gradient-to-br');
     expect(container.innerHTML).not.toContain('shadow-[0_8px_28px');
-    expect(container.innerHTML).toContain('grid-cols-[88px_minmax(0,1fr)] items-start');
+    expect(container.innerHTML).toContain('sm:grid-cols-[minmax(176px,0.9fr)_minmax(0,1.15fr)]');
+    expect(container.innerHTML).toContain('h-12');
     expect(screen.getByLabelText('Environment lighting')).not.toBeChecked();
     expect(screen.getByLabelText('Shadows')).not.toBeChecked();
     expect(screen.getByLabelText('RGB proof preview')).toBeChecked();

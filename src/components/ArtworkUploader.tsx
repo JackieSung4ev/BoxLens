@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useState, type ChangeEvent, type DragEvent } from 'react';
 import { ChevronDown, Droplet, Image as ImageIcon, ImagePlus, Sparkles, Trash2, Upload } from 'lucide-react';
 import { isArtworkImageFile, matchArtworkFilesBySide, matchArtworkSideByFilename } from '../lib/artworkAutoMatch';
 import { ARTWORK_SIDES } from '../lib/boxGeometry';
@@ -212,12 +212,23 @@ function ArtworkSlot({
 
     if (imageFiles.length === 1 && !matchArtworkSideByFilename(file.webkitRelativePath || file.name)) {
       onUpload(file);
+      onAppearanceChange({ mode: 'artwork' });
+    }
+  };
+
+  const handleArtworkInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = Array.from(event.currentTarget.files ?? []).find(isArtworkImageFile);
+
+    if (file) {
+      onUpload(file);
+      onAppearanceChange({ mode: 'artwork' });
+      event.currentTarget.value = '';
     }
   };
 
   return (
     <div
-      className={`rounded-xl border p-4 transition ${
+      className={`rounded-2xl border p-4 transition sm:p-5 ${
         isArtworkMode
           ? 'border-lens-200 bg-white hover:border-lens-500/45'
           : 'border-ink-200 bg-white hover:border-ink-300'
@@ -225,45 +236,66 @@ function ArtworkSlot({
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
     >
-      <div className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-4">
-        <div
-          className={`flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border bg-white text-center ${
-            asset || appearance.mode === 'solid' ? 'border-ink-200' : 'border-dashed border-lens-100'
+      <div className="grid gap-5 sm:grid-cols-[minmax(176px,0.9fr)_minmax(0,1.15fr)] sm:items-stretch">
+        <label
+          className={`group relative flex min-h-[224px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border bg-white px-4 text-center transition ${
+            asset || appearance.mode === 'solid'
+              ? 'border-ink-200'
+              : 'border-dashed border-lens-200 bg-lens-50/35 hover:border-lens-500/55 hover:bg-lens-50/60'
           }`}
         >
+          <input
+            accept="image/png,image/jpeg,image/svg+xml,image/*"
+            aria-label={formatMessage(copy.uploadArtworkInputLabel, { side: sideLabel })}
+            className="sr-only"
+            onChange={handleArtworkInputChange}
+            type="file"
+          />
           {appearance.mode === 'solid' ? (
             <div
               aria-hidden="true"
-              className="h-full w-full"
+              className="absolute inset-0"
               style={{ backgroundColor: appearance.color }}
             />
           ) : asset ? (
             <img
               alt={formatMessage(copy.artworkPreview, { side: sideLabel })}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               src={asset.url}
             />
           ) : (
-            <>
-              <Upload aria-hidden="true" className="text-ink-300" size={23} />
-              <span className="text-[11px] font-semibold leading-none text-ink-300">{copy.dropArtwork}</span>
-            </>
+            <span className="relative flex flex-col items-center gap-4">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-lens-100/80 text-lens-600 transition group-hover:bg-lens-100">
+                <Upload aria-hidden="true" size={32} strokeWidth={2.2} />
+              </span>
+              <span className="text-lg font-semibold leading-none text-lens-600">{copy.dropArtwork}</span>
+              <span className="text-sm leading-5 text-ink-500">{copy.supportedArtworkFormats}</span>
+            </span>
           )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-h-7 items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="truncate text-base font-semibold leading-6 text-ink-950">{sideLabel}</p>
+          {appearance.mode === 'solid' ? (
+            <span className="relative rounded-md bg-white/85 px-2 py-1 text-xs font-semibold leading-none text-ink-700 shadow-control">
+              {copy.solidColorModeShort}
+            </span>
+          ) : null}
+        </label>
+
+        <div className="flex min-w-0 flex-col gap-5 py-1">
+          <div className="flex min-h-12 items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="truncate text-xl font-semibold leading-tight text-ink-950 sm:text-2xl">{sideLabel}</p>
               {side === 'front' ? (
-                <span className="shrink-0 rounded-md bg-lens-100 px-2 py-0.5 text-[10px] font-semibold leading-4 text-lens-600">
+                  <span className="shrink-0 rounded-md bg-lens-100 px-2.5 py-1 text-sm font-semibold leading-none text-lens-600">
                   {copy.primaryPanelBadge}
                 </span>
               ) : null}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-ink-500">{copy.sideHelpers[side]}</p>
             </div>
             {asset && appearance.mode === 'artwork' ? (
               <button
                 aria-label={formatMessage(copy.removeArtwork, { side: sideLabel })}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white hover:text-ink-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-500 transition hover:bg-ink-50 hover:text-ink-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
                 onClick={onRemove}
                 type="button"
               >
@@ -271,157 +303,164 @@ function ArtworkSlot({
               </button>
             ) : null}
           </div>
-          <p className="mt-1 text-xs leading-5 text-ink-500">{copy.sideHelpers[side]}</p>
-          <fieldset className="mt-3 space-y-2">
+
+          <fieldset className="space-y-5">
             <legend className="sr-only">{formatMessage(copy.faceAppearanceLabel, { side: sideLabel })}</legend>
-            <div className="grid h-10 grid-cols-2 gap-1 rounded-lg border border-ink-200 bg-white p-1">
-              {(['artwork', 'solid'] as const).map((mode) => {
-                const ModeIcon = mode === 'artwork' ? ImageIcon : Droplet;
+            <div className="space-y-3">
+              <p className="text-base font-semibold leading-6 text-ink-950">{copy.displayContent}</p>
+              <div className="grid grid-cols-2 gap-1 rounded-xl border border-ink-200 bg-white p-1">
+                {(['artwork', 'solid'] as const).map((mode) => {
+                  const ModeIcon = mode === 'artwork' ? ImageIcon : Droplet;
 
-                return (
-                  <label
-                    className={`relative inline-flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-xs font-semibold transition ${
-                      appearance.mode === mode
-                        ? 'bg-lens-600 text-white'
-                        : 'text-ink-600 hover:bg-ink-50'
-                    }`}
-                    key={mode}
-                  >
-                    <input
-                      aria-label={mode === 'artwork' ? copy.artworkMode : copy.solidColorMode}
-                      checked={appearance.mode === mode}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      name={appearanceName}
-                      onChange={() => onAppearanceChange({ mode })}
-                      type="radio"
-                      value={mode}
-                    />
-                    <ModeIcon aria-hidden="true" className="pointer-events-none shrink-0" size={14} />
-                    <span className="pointer-events-none truncate">
-                      {mode === 'artwork' ? copy.artworkModeShort : copy.solidColorModeShort}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-            {appearance.mode === 'solid' ? (
-              <SolidColorControls
-                appearance={appearance}
-                copy={copy}
-                onAppearanceChange={onAppearanceChange}
-                sideLabel={sideLabel}
-              />
-            ) : null}
-            <div className="rounded-lg border border-proof-200 bg-proof-100/55 p-2">
-              <button
-                aria-controls={foilPanelId}
-                aria-expanded={foilExpanded}
-                aria-label={formatMessage(copy.foilToggleLabel, { side: sideLabel })}
-                className="flex min-h-10 w-full items-center justify-between gap-2 rounded-md px-1 text-left text-xs font-semibold text-ink-700 transition hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
-                onClick={() => setFoilExpanded((expanded) => !expanded)}
-                type="button"
-              >
-                <span className="flex min-w-0 items-center gap-1.5">
-                  <Sparkles aria-hidden="true" className="shrink-0 text-proof-500" size={14} />
-                  <span className="truncate">{copy.foilFinish}</span>
-                </span>
-                <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-normal text-ink-500">
-                  {copy.foilModeOptions[finish.mode]}
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={`transition-transform ${foilExpanded ? 'rotate-180' : ''}`}
-                    size={14}
-                  />
-                </span>
-              </button>
-
-              {foilExpanded ? (
-                <div className="mt-2 space-y-2" id={foilPanelId}>
-                  <label className="grid gap-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.foilMode}</span>
-                    <select
-                      aria-label={formatMessage(copy.foilModeInputLabel, { side: sideLabel })}
-                      className="h-9 w-full rounded-lg border border-ink-300 bg-white px-2 text-xs font-semibold text-ink-950 shadow-control outline-none transition focus:border-lens-500 focus:ring-2 focus:ring-lens-100"
-                      onChange={(event) => onFinishChange({ mode: event.target.value as FoilMode })}
-                      value={finish.mode}
+                  return (
+                    <label
+                      className={`relative inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-sm font-semibold leading-none transition sm:text-base ${
+                        appearance.mode === mode
+                          ? 'bg-lens-600 text-white shadow-control'
+                          : 'text-ink-950 hover:bg-ink-50'
+                      }`}
+                      key={mode}
                     >
-                      {FOIL_MODE_OPTIONS.map((mode) => (
-                        <option key={mode} value={mode}>
-                          {copy.foilModeOptions[mode]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
-                    <label className="grid gap-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.foilColor}</span>
-                      <span className="flex items-center gap-2">
-                        <span
-                          aria-hidden="true"
-                          className="h-8 w-8 rounded-md border border-ink-300"
-                          style={{ backgroundColor: finish.color }}
-                        />
-                        <input
-                          aria-label={formatMessage(copy.foilColorInputLabel, { side: sideLabel })}
-                          className="h-8 w-12 cursor-pointer rounded-lg border border-ink-300 bg-white p-1"
-                          onChange={(event) => onFinishChange({ color: event.target.value })}
-                          type="color"
-                          value={finish.color}
-                        />
-                      </span>
-                    </label>
-
-                    <label className="grid min-w-0 gap-1">
-                      <span className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-normal text-ink-500">
-                        {copy.foilIntensity}
-                        <span className="tabular-nums">{Math.round(finish.intensity * 100)}%</span>
-                      </span>
                       <input
-                        aria-label={formatMessage(copy.foilIntensityInputLabel, { side: sideLabel })}
-                        className="h-8 w-full accent-proof-500"
-                        max={1}
-                        min={0.2}
-                        onChange={(event) => onFinishChange({ intensity: event.target.valueAsNumber })}
-                        step={0.05}
-                        type="range"
-                        value={finish.intensity}
+                        aria-label={mode === 'artwork' ? copy.artworkMode : copy.solidColorMode}
+                        checked={appearance.mode === mode}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        name={appearanceName}
+                        onChange={() => onAppearanceChange({ mode })}
+                        type="radio"
+                        value={mode}
                       />
+                      <ModeIcon aria-hidden="true" className="pointer-events-none shrink-0" size={18} />
+                      <span className="pointer-events-none truncate">
+                        {mode === 'artwork' ? copy.artworkModeShort : copy.solidColorModeShort}
+                      </span>
                     </label>
-                  </div>
-
-                  {usesFoilMask ? (
-                    <div className="flex items-center gap-2">
-                      <label className="inline-flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-lg border border-dashed border-proof-300 bg-white px-3 text-xs font-semibold text-ink-700 transition hover:border-proof-500 hover:text-ink-950">
-                        <input
-                          accept="image/*"
-                          aria-label={formatMessage(copy.foilMaskInputLabel, { side: sideLabel })}
-                          className="sr-only"
-                          onChange={(event) => {
-                            const file = event.currentTarget.files?.[0];
-                            if (file) {
-                              onFoilMaskUpload(file);
-                              event.currentTarget.value = '';
-                            }
-                          }}
-                          type="file"
-                        />
-                        {finish.mask?.file.name ?? copy.foilMask}
-                      </label>
-                      {finish.mask ? (
-                        <button
-                          aria-label={formatMessage(copy.removeFoilMask, { side: sideLabel })}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white hover:text-ink-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
-                          onClick={onFoilMaskRemove}
-                          type="button"
-                        >
-                          <Trash2 aria-hidden="true" size={16} />
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
+                  );
+                })}
+              </div>
+              {appearance.mode === 'solid' ? (
+                <SolidColorControls
+                  appearance={appearance}
+                  copy={copy}
+                  onAppearanceChange={onAppearanceChange}
+                  sideLabel={sideLabel}
+                />
               ) : null}
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-base font-semibold leading-6 text-ink-950">{copy.effectSettings}</p>
+              <div className="overflow-hidden rounded-xl border border-proof-200 bg-proof-100/70">
+                <button
+                  aria-controls={foilPanelId}
+                  aria-expanded={foilExpanded}
+                  aria-label={formatMessage(copy.foilToggleLabel, { side: sideLabel })}
+                  className="flex h-12 w-full items-center justify-between gap-3 px-4 text-left text-sm font-semibold leading-none text-ink-700 transition hover:bg-white/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500 sm:text-base"
+                  onClick={() => setFoilExpanded((expanded) => !expanded)}
+                  type="button"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Sparkles aria-hidden="true" className="shrink-0 text-proof-500" size={18} />
+                    <span className="truncate">{copy.foilFinish}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2 text-sm font-semibold leading-none text-ink-500">
+                    {copy.foilModeOptions[finish.mode]}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`transition-transform ${foilExpanded ? 'rotate-180' : ''}`}
+                      size={18}
+                    />
+                  </span>
+                </button>
+
+                {foilExpanded ? (
+                  <div className="space-y-2 border-t border-proof-200/70 bg-white/75 p-3" id={foilPanelId}>
+                    <label className="grid gap-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.foilMode}</span>
+                      <select
+                        aria-label={formatMessage(copy.foilModeInputLabel, { side: sideLabel })}
+                        className="h-9 w-full rounded-lg border border-ink-300 bg-white px-2 text-xs font-semibold text-ink-950 shadow-control outline-none transition focus:border-lens-500 focus:ring-2 focus:ring-lens-100"
+                        onChange={(event) => onFinishChange({ mode: event.target.value as FoilMode })}
+                        value={finish.mode}
+                      >
+                        {FOIL_MODE_OPTIONS.map((mode) => (
+                          <option key={mode} value={mode}>
+                            {copy.foilModeOptions[mode]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+                      <label className="grid gap-1">
+                        <span className="text-[10px] font-semibold uppercase tracking-normal text-ink-500">{copy.foilColor}</span>
+                        <span className="flex items-center gap-2">
+                          <span
+                            aria-hidden="true"
+                            className="h-8 w-8 rounded-md border border-ink-300"
+                            style={{ backgroundColor: finish.color }}
+                          />
+                          <input
+                            aria-label={formatMessage(copy.foilColorInputLabel, { side: sideLabel })}
+                            className="h-8 w-12 cursor-pointer rounded-lg border border-ink-300 bg-white p-1"
+                            onChange={(event) => onFinishChange({ color: event.target.value })}
+                            type="color"
+                            value={finish.color}
+                          />
+                        </span>
+                      </label>
+
+                      <label className="grid min-w-0 gap-1">
+                        <span className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-normal text-ink-500">
+                          {copy.foilIntensity}
+                          <span className="tabular-nums">{Math.round(finish.intensity * 100)}%</span>
+                        </span>
+                        <input
+                          aria-label={formatMessage(copy.foilIntensityInputLabel, { side: sideLabel })}
+                          className="h-8 w-full accent-proof-500"
+                          max={1}
+                          min={0.2}
+                          onChange={(event) => onFinishChange({ intensity: event.target.valueAsNumber })}
+                          step={0.05}
+                          type="range"
+                          value={finish.intensity}
+                        />
+                      </label>
+                    </div>
+
+                    {usesFoilMask ? (
+                      <div className="flex items-center gap-2">
+                        <label className="inline-flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-lg border border-dashed border-proof-300 bg-white px-3 text-xs font-semibold text-ink-700 transition hover:border-proof-500 hover:text-ink-950">
+                          <input
+                            accept="image/*"
+                            aria-label={formatMessage(copy.foilMaskInputLabel, { side: sideLabel })}
+                            className="sr-only"
+                            onChange={(event) => {
+                              const file = event.currentTarget.files?.[0];
+                              if (file) {
+                                onFoilMaskUpload(file);
+                                event.currentTarget.value = '';
+                              }
+                            }}
+                            type="file"
+                          />
+                          {finish.mask?.file.name ?? copy.foilMask}
+                        </label>
+                        {finish.mask ? (
+                          <button
+                            aria-label={formatMessage(copy.removeFoilMask, { side: sideLabel })}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-500 transition hover:bg-white hover:text-ink-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lens-500"
+                            onClick={onFoilMaskRemove}
+                            type="button"
+                          >
+                            <Trash2 aria-hidden="true" size={16} />
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </fieldset>
         </div>

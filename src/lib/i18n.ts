@@ -1,0 +1,221 @@
+import type {
+  ArtworkSide,
+  FaceColorMode,
+  LightDirection,
+  LightingPreset,
+  SideArtworkRotation,
+  SurfacePreset,
+} from '../types';
+
+export type Locale = 'en' | 'zh';
+
+export const LOCALE_OPTIONS: Array<{ value: Locale; label: string }> = [
+  { value: 'en', label: 'English' },
+  { value: 'zh', label: '中文' },
+];
+
+export function detectLocale(languages?: readonly string[]): Locale {
+  const candidates =
+    languages && languages.length > 0
+      ? languages
+      : typeof navigator !== 'undefined'
+        ? [...(navigator.languages ?? []), navigator.language].filter(Boolean)
+        : ['en'];
+
+  return candidates.some((language) => language.toLowerCase().startsWith('zh')) ? 'zh' : 'en';
+}
+
+export const translations = {
+  en: {
+    subtitle: 'Real-time 3D packaging mockup generator',
+    previewLabel: '3D packaging preview',
+    language: 'Language',
+    dimensionsHeading: 'Box dimensions',
+    dimensions: {
+      width: 'Width in mm',
+      height: 'Height in mm',
+      depth: 'Depth in mm',
+    },
+    artworkHeading: 'Artwork',
+    sides: {
+      front: 'Front',
+      back: 'Back',
+      left: 'Left',
+      right: 'Right',
+      top: 'Top',
+      bottom: 'Bottom',
+    } satisfies Record<ArtworkSide, string>,
+    sideHelpers: {
+      front: 'Main panel facing the camera',
+      back: 'Rear panel opposite the front',
+      left: 'Left side panel',
+      right: 'Right side panel',
+      top: 'Top flap or lid artwork',
+      bottom: 'Bottom panel artwork',
+    } satisfies Record<ArtworkSide, string>,
+    upload: 'Upload',
+    replace: 'Replace',
+    dropArtwork: 'Drop artwork',
+    primaryPanelBadge: 'Primary view',
+    removeArtwork: 'Remove {side} artwork',
+    artworkPreview: '{side} artwork preview',
+    faceAppearanceLabel: '{side} face appearance',
+    artworkMode: 'Artwork',
+    artworkModeShort: 'Artwork',
+    solidColorMode: 'Solid color',
+    solidColorModeShort: 'Solid',
+    faceColor: 'Face color',
+    solidColorInputLabel: '{side} solid color',
+    colorMode: 'Color mode',
+    colorModeOptions: {
+      rgb: 'RGB',
+      cmyk: 'CMYK',
+    } satisfies Record<FaceColorMode, string>,
+    colorChannels: {
+      red: 'Red channel',
+      green: 'Green channel',
+      blue: 'Blue channel',
+      cyan: 'Cyan channel',
+      magenta: 'Magenta channel',
+      yellow: 'Yellow channel',
+      black: 'Black channel',
+    },
+    renderingHeading: 'Rendering',
+    backgroundColor: 'Background color',
+    useBackground: 'Use background {color}',
+    customBackground: 'Custom background color',
+    surface: 'Surface',
+    shadows: 'Shadows',
+    environmentLighting: 'Environment lighting',
+    environmentIntensity: 'Environment intensity',
+    sideArtworkRotation: 'Side artwork rotation',
+    lightingPreset: 'Lighting preset',
+    lightIntensity: 'Light intensity',
+    lightDirection: 'Light direction',
+    resetCamera: 'Reset camera',
+    exportPng: 'Export PNG',
+    renderHint: 'Drag artwork files or a side-named folder, rotate to the preferred angle, then export the visible WebGL view.',
+    surfaceOptions: {
+      none: 'No surface',
+      woodFloor: 'Wood floor',
+      woodTable: 'Wood table',
+    } satisfies Record<SurfacePreset, string>,
+    sideRotationOptions: {
+      none: 'No rotation',
+      rotate90: 'Pre-rotated +90 deg',
+      rotateMinus90: 'Pre-rotated -90 deg',
+      rotate180: 'Rotate 180 deg',
+    } satisfies Record<SideArtworkRotation, string>,
+    lightingPresetOptions: {
+      softbox: 'Softbox',
+      studio: 'Studio balanced',
+      crisp: 'Crisp product',
+      dramatic: 'Dramatic contrast',
+    } satisfies Record<LightingPreset, string>,
+    lightDirectionOptions: {
+      frontRight: 'Front right',
+      frontLeft: 'Front left',
+      top: 'Top down',
+      sideRight: 'Right side',
+    } satisfies Record<LightDirection, string>,
+  },
+  zh: {
+    subtitle: '实时 3D 包装盒效果图生成器',
+    previewLabel: '3D 包装盒预览',
+    language: '语言',
+    dimensionsHeading: '盒型尺寸',
+    dimensions: {
+      width: '宽度 mm',
+      height: '高度 mm',
+      depth: '深度 mm',
+    },
+    artworkHeading: '设计稿',
+    sides: {
+      front: '正面',
+      back: '背面',
+      left: '左侧',
+      right: '右侧',
+      top: '顶部',
+      bottom: '底部',
+    } satisfies Record<ArtworkSide, string>,
+    sideHelpers: {
+      front: '面向镜头的主展示面',
+      back: '正面相对的背面',
+      left: '包装左侧面',
+      right: '包装右侧面',
+      top: '顶部或盒盖设计稿',
+      bottom: '底部设计稿',
+    } satisfies Record<ArtworkSide, string>,
+    upload: '上传',
+    replace: '替换',
+    dropArtwork: '上传设计稿',
+    primaryPanelBadge: '主展示面',
+    removeArtwork: '移除{side}设计稿',
+    artworkPreview: '{side}设计稿预览',
+    faceAppearanceLabel: '{side}面外观',
+    artworkMode: '设计稿',
+    artworkModeShort: '设计稿',
+    solidColorMode: '纯色',
+    solidColorModeShort: '纯色',
+    faceColor: '面颜色',
+    solidColorInputLabel: '{side}纯色',
+    colorMode: '颜色模式',
+    colorModeOptions: {
+      rgb: 'RGB',
+      cmyk: 'CMYK',
+    } satisfies Record<FaceColorMode, string>,
+    colorChannels: {
+      red: '红色通道',
+      green: '绿色通道',
+      blue: '蓝色通道',
+      cyan: '青色通道',
+      magenta: '品红通道',
+      yellow: '黄色通道',
+      black: '黑色通道',
+    },
+    renderingHeading: '渲染',
+    backgroundColor: '背景颜色',
+    useBackground: '使用背景色 {color}',
+    customBackground: '自定义背景色',
+    surface: '承载面',
+    shadows: '阴影',
+    environmentLighting: '环境光',
+    environmentIntensity: '环境光强度',
+    sideArtworkRotation: '侧面图旋转',
+    lightingPreset: '灯光类型',
+    lightIntensity: '灯光强度',
+    lightDirection: '灯光方向',
+    resetCamera: '重置相机',
+    exportPng: '导出 PNG',
+    renderHint: '拖拽设计稿文件，或拖入按面命名的文件夹；旋转到合适角度后，导出当前 WebGL 视图。',
+    surfaceOptions: {
+      none: '无',
+      woodFloor: '木地板',
+      woodTable: '木桌',
+    } satisfies Record<SurfacePreset, string>,
+    sideRotationOptions: {
+      none: '不旋转',
+      rotate90: '已预旋转 +90 度',
+      rotateMinus90: '已预旋转 -90 度',
+      rotate180: '旋转 180 度',
+    } satisfies Record<SideArtworkRotation, string>,
+    lightingPresetOptions: {
+      softbox: '柔光箱',
+      studio: '棚拍均衡',
+      crisp: '产品硬光',
+      dramatic: '高反差',
+    } satisfies Record<LightingPreset, string>,
+    lightDirectionOptions: {
+      frontRight: '右前方',
+      frontLeft: '左前方',
+      top: '顶部',
+      sideRight: '右侧',
+    } satisfies Record<LightDirection, string>,
+  },
+} as const;
+
+export type Translation = (typeof translations)[Locale];
+
+export function formatMessage(template: string, values: Record<string, string>): string {
+  return Object.entries(values).reduce((message, [key, value]) => message.replace(`{${key}}`, value), template);
+}

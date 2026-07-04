@@ -115,6 +115,95 @@ npm run verify:browser
 
 The browser verification checks desktop and mobile rendering, verifies that the WebGL canvas is nonblank, and confirms PNG export works.
 
+## Production Deployment
+
+BoxLens is a static Vite frontend. Build the app with `npm run build` and deploy the generated `dist/` directory.
+
+### Static Hosting
+
+Any static hosting platform can serve the production build:
+
+```bash
+npm ci
+npm run build
+```
+
+Upload or publish the contents of `dist/`.
+
+### Ubuntu and Nginx
+
+Install the required system packages:
+
+```bash
+sudo apt update
+sudo apt install -y nginx git nodejs npm
+```
+
+Clone, install, and build the app:
+
+```bash
+cd /opt
+sudo git clone https://github.com/JackieSung4ev/BoxLens.git boxlens
+sudo chown -R $USER:$USER /opt/boxlens
+cd /opt/boxlens
+npm ci
+npm run build
+```
+
+Publish the build output:
+
+```bash
+sudo mkdir -p /var/www/boxlens
+sudo rsync -a --delete dist/ /var/www/boxlens/
+```
+
+Create `/etc/nginx/sites-available/boxlens`:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    root /var/www/boxlens;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /assets/ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+Enable the site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/boxlens /etc/nginx/sites-enabled/boxlens
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+For HTTPS with Certbot:
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+To deploy updates later:
+
+```bash
+cd /opt/boxlens
+git pull
+npm ci
+npm run build
+sudo rsync -a --delete dist/ /var/www/boxlens/
+```
+
 ## Project Structure
 
 ```text

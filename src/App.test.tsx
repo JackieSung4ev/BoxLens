@@ -49,6 +49,8 @@ describe('App', () => {
   it('renders the BoxLens workspace without visible upload buttons', () => {
     const { container } = render(<App />);
 
+    expect(screen.getByTestId('brand-logo-mark')).toHaveClass('border', 'border-ink-200', 'bg-white', 'rounded-lg');
+    expect(screen.getByRole('img', { name: 'BoxLens logo' })).toHaveAttribute('src', '/logo.png');
     expect(screen.getByRole('heading', { name: 'BoxLens' })).toBeInTheDocument();
     expect(screen.getByText('Real-time 3D packaging mockup generator')).toBeInTheDocument();
     expect(screen.getByLabelText('Width in mm')).toHaveValue(120);

@@ -1,4 +1,4 @@
-import { Box, Palette, RotateCcw, Sparkles } from 'lucide-react';
+import { Palette, RotateCcw, Sparkles } from 'lucide-react';
 import { ArtworkUploader } from './ArtworkUploader';
 import { DimensionControls } from './DimensionControls';
 import { ExportButton } from './ExportButton';
@@ -78,8 +78,11 @@ export function Sidebar({
       <div className="space-y-6">
         <header className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-ink-950 text-white shadow-control">
-              <Box aria-hidden="true" size={23} strokeWidth={1.8} />
+            <div
+              className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg border border-ink-200 bg-white shadow-control"
+              data-testid="brand-logo-mark"
+            >
+              <img alt="BoxLens logo" className="h-full w-full object-contain" draggable={false} src="/logo.png" />
             </div>
             <div>
               <h1 className="text-2xl font-semibold leading-tight text-ink-950">BoxLens</h1>
